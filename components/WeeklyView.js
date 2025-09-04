@@ -235,4 +235,3 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
-
