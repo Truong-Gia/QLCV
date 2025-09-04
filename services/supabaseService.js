@@ -1,4 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { showSupabaseModal } from '../utils/uiUtils.js';
 
 let supabaseClient = null;
 
@@ -20,3 +21,4 @@ export function getSupabaseClient() {
     }
     return null;
 }
+
