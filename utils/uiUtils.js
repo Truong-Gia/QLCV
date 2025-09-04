@@ -55,7 +55,10 @@ export function updateProfileUI(userProfile) {
     const nameDisplay = document.getElementById('user-name-display');
     const avatarDisplay = document.getElementById('user-avatar');
     if (nameDisplay) nameDisplay.textContent = userProfile.name || 'Hồ sơ';
-    if (avatarDisplay) avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
+    if (avatarDisplay) {
+        avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
+        avatarDisplay.style.backgroundColor = stringToColor(userProfile.email || '');
+    }
 }
 
 export function showSupabaseModal() {
@@ -95,3 +98,17 @@ export function showSupabaseModal() {
     }
 }
 
+// SỬA LỖI: Thêm từ khóa 'export' để các file khác có thể sử dụng hàm này
+export function stringToColor(str) {
+    if (!str) return '#e0e7ff';
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    let color = '#';
+    for (let i = 0; i < 3; i++) {
+        let value = (hash >> (i * 8)) & 0xFF;
+        color += ('00' + (value & 0xCF | 0x30)).toString(16).substr(-2);
+    }
+    return color;
+}
