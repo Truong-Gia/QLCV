@@ -1,4 +1,4 @@
-// Sửa lỗi: Gọi showSupabaseModal từ uiUtils.js
+// Sửa lỗi: Sửa lại đường dẫn import 'uiUtils.js' cho đúng
 import { getSupabaseClient } from './services/supabaseService.js';
 import { renderWeeklyView } from './components/WeeklyView.js';
 import { renderMonthlyView } from './components/MonthlyView.js';
@@ -87,4 +87,13 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
+```
 
+### **Hướng dẫn Cập nhật**
+
+1.  **Cập nhật Code:** Trên máy tính của bạn, hãy thay thế nội dung của file `main.js`.
+2.  **Đẩy lên GitHub:** Mở Terminal và chạy các lệnh:
+    ```bash
+    git add main.js
+    git commit -m "Fix: Correct typo in uiUtils.js import path"
+    git push
