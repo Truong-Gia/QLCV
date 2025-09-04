@@ -1,4 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+// Sửa lỗi: Sử dụng đường dẫn tương đối
 import { showModal, setupModalEvents } from '../utils/uiUtils.js';
 
 let supabaseClient = null;
@@ -51,3 +52,4 @@ export function showSupabaseModal() {
         }
     });
 }
+
