@@ -1,7 +1,6 @@
-import { formatDate } from '../utils/dateUtils.js';
+import { state } from '../state.js';
+import { formatDate, getWeekDays } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
-
-const state = window.state;
 
 function renderMonthDay(day, month, year) {
     const today = new Date();
@@ -9,6 +8,7 @@ function renderMonthDay(day, month, year) {
     if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
         dayClasses += ' bg-indigo-50';
     }
+
     return `
         <div class="${dayClasses}" data-day="${day}">
             <span class="font-medium ${day === today.getDate() && month === today.getMonth() ? 'text-indigo-600' : ''}">${day}</span>
