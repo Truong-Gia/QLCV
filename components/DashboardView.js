@@ -1,7 +1,5 @@
+import { state } from '../state.js';
 import { formatDate } from '../utils/dateUtils.js';
-import { stringToColor } from '../utils/uiUtils.js';
-
-const state = window.state;
 
 function createChart(canvasId, type, labels, data, colors) {
     const ctx = document.getElementById(canvasId).getContext('2d');
@@ -42,7 +40,7 @@ function renderTaskList(elementId, tasks) {
             <p class="${task.is_completed ? 'line-through text-gray-400' : ''}">${task.content}</p>
             <div class="flex items-center justify-between text-xs text-gray-400 mt-1">
                 <span>${formatDate(new Date(task.due_date))}</span>
-                ${task.assigned_to_name ? `<div class="flex items-center gap-1"><div class="avatar" style="background-color: ${stringToColor(task.assigned_to_email)}" title="${task.assigned_to_name}">${task.assigned_to_name.charAt(0)}</div><span>${task.assigned_to_name}</span></div>` : ''}
+                ${task.assigned_to_name ? `<div class="flex items-center gap-1"><div class="avatar" style="background-color: ${state.stringToColor(task.assigned_to_email)}" title="${task.assigned_to_name}">${task.assigned_to_name.charAt(0)}</div><span>${task.assigned_to_name}</span></div>` : ''}
             </div>
         </div>
     `).join('');
@@ -94,7 +92,7 @@ export async function renderDashboardView() {
     const { data: tasks, error } = await query;
     if (error) { alert("Lỗi tải dữ liệu Dashboard: " + error.message); return; }
 
-    // Monthly Progress (based on current month's tasks)
+    // Monthly Progress
     const monthTasks = tasks.filter(t => t.due_date >= firstDayOfMonth && t.due_date <= lastDayOfMonth);
     const totalTasks = monthTasks.length;
     const completedTasks = monthTasks.filter(t => t.is_completed).length;
@@ -109,7 +107,7 @@ export async function renderDashboardView() {
     renderTaskList('today-tasks-list', tasks.filter(t => t.due_date === todayStr));
     renderTaskList('upcoming-tasks-list', tasks.filter(t => t.due_date > todayStr && !t.is_completed).slice(0, 10));
 
-    // Charts (based on all filtered tasks)
+    // Charts
     const statusCounts = tasks.reduce((acc, t) => { const s = t.status || 'Cần làm'; acc[s] = (acc[s] || 0) + 1; return acc; }, {});
     createChart('status-chart', 'pie', Object.keys(statusCounts), Object.values(statusCounts), Object.keys(statusCounts).map(s => state.STATUS_COLORS[s] || '#d1d5db'));
     
