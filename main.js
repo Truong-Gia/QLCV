@@ -1,4 +1,3 @@
-// Sửa lỗi: Sửa lại đường dẫn import 'uiUtils.js' cho đúng
 import { getSupabaseClient } from './services/supabaseService.js';
 import { renderWeeklyView } from './components/WeeklyView.js';
 import { renderMonthlyView } from './components/MonthlyView.js';
@@ -7,7 +6,8 @@ import { renderKanbanView } from './components/KanbanView.js';
 import { openProfileModal } from './components/Modals.js';
 import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './utils/uiUtils.js';
 
-// --- State ---
+// --- State (Trạng thái Toàn cục) ---
+// Tạo một đối tượng 'state' trên 'window' để các module khác có thể truy cập
 window.state = {
     currentDate: new Date(),
     currentView: 'week',
@@ -16,9 +16,16 @@ window.state = {
     userProfile: { name: 'Tôi', email: 'me@example.com' },
     teamMembers: [],
     supabase: null,
+    // Các hằng số cũng được đưa vào state để dễ quản lý
+    PRIORITIES: { 'Cao': 'bg-red-100 text-red-800', 'Trung bình': 'bg-yellow-100 text-yellow-800', 'Thấp': 'bg-blue-100 text-blue-800' },
+    CATEGORIES: ['Chung', 'Công việc', 'Cá nhân', 'Học tập', 'Dự án'],
+    STATUSES: ['Cần làm', 'Đang làm', 'Hoàn thành', 'Tạm dừng'],
+    STATUS_COLORS: { 'Cần làm': '#fca5a5', 'Đang làm': '#fdba74', 'Hoàn thành': '#86efac', 'Tạm dừng': '#d1d5db' },
+    PRIORITY_COLORS: { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' },
+    CATEGORY_COLORS: ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'],
 };
 
-// --- DOM Elements ---
+// --- DOM Elements (Các thành phần HTML) ---
 const appContainer = document.getElementById('app-container');
 const quoteDisplay = document.getElementById('quote-display');
 const toggleButtons = {
@@ -29,7 +36,11 @@ const toggleButtons = {
 };
 const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
 
-// --- Core Functions ---
+// --- Core Functions (Các hàm Lõi) ---
+
+/**
+ * Hiển thị giao diện tương ứng với trạng thái 'currentView' hiện tại.
+ */
 async function renderCurrentView() {
     showLoading();
     const viewRenderers = {
@@ -39,13 +50,27 @@ async function renderCurrentView() {
         kanban: renderKanbanView,
     };
     
+    // Hiện hoặc ẩn bộ lọc tùy theo giao diện
+    const filtersContainer = document.getElementById('filters-container');
+    if (['dashboard', 'kanban'].includes(state.currentView)) {
+        filtersContainer.classList.remove('hidden');
+    } else {
+        filtersContainer.classList.add('hidden');
+    }
+
+    // Gọi hàm render tương ứng
     if (viewRenderers[state.currentView]) {
         await viewRenderers[state.currentView]();
     }
     hideLoading();
 }
+// Đưa hàm ra global để các component có thể gọi lại sau khi thay đổi dữ liệu
 window.renderCurrentView = renderCurrentView;
 
+/**
+ * Chuyển đổi giữa các chế độ xem (Lịch Tuần, Tháng, Dashboard, Kanban).
+ * @param {string} view - Tên của chế độ xem cần chuyển tới.
+ */
 function switchView(view) {
     if (view === state.currentView) return;
     state.currentView = view;
@@ -53,6 +78,7 @@ function switchView(view) {
     Object.values(toggleButtons).forEach(btn => btn.classList.remove('active'));
     if (toggleButtons[view]) toggleButtons[view].classList.add('active');
     
+    // Hủy các biểu đồ cũ khi rời khỏi Dashboard để tránh rò rỉ bộ nhớ
     if (view !== 'dashboard') {
         Object.values(state.chartInstances).forEach(chart => chart.destroy());
         state.chartInstances = {};
@@ -60,6 +86,9 @@ function switchView(view) {
     renderCurrentView();
 }
 
+/**
+ * Tải thông tin người dùng và nhóm từ Local Storage.
+ */
 function loadUserData() {
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) state.userProfile = JSON.parse(savedProfile);
@@ -68,18 +97,22 @@ function loadUserData() {
     updateProfileUI(state.userProfile);
 }
 
-// --- INITIALIZATION ---
+// --- INITIALIZATION (Khởi tạo Ứng dụng) ---
 (async function init() {
     loadUserData();
     
+    // Gán sự kiện cho các nút chuyển đổi giao diện và nút hồ sơ
     Object.keys(toggleButtons).forEach(key => {
-        toggleButtons[key].addEventListener('click', () => switchView(key));
+        if(toggleButtons[key]) {
+            toggleButtons[key].addEventListener('click', () => switchView(key));
+        }
     });
     document.getElementById('profile-btn').addEventListener('click', openProfileModal);
 
+    // Lấy Supabase client và bắt đầu render ứng dụng
     const supabase = getSupabaseClient();
     if (supabase) {
-        state.supabase = supabase;
+        state.supabase = supabase; // Lưu client vào state để các module khác sử dụng
         appContainer.classList.remove('hidden');
         quoteDisplay.textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
         await renderCurrentView();
@@ -87,13 +120,3 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
-```
-
-### **Hướng dẫn Cập nhật**
-
-1.  **Cập nhật Code:** Trên máy tính của bạn, hãy thay thế nội dung của file `main.js`.
-2.  **Đẩy lên GitHub:** Mở Terminal và chạy các lệnh:
-    ```bash
-    git add main.js
-    git commit -m "Fix: Correct typo in uiUtils.js import path"
-    git push
