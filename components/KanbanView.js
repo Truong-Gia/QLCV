@@ -1,7 +1,6 @@
+import { state } from '../state.js';
 import { formatDate } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
-
-const state = window.state;
 
 function renderKanbanTask(task) {
     const priorityClass = state.PRIORITIES[task.priority] || state.PRIORITIES['Trung bình'];
@@ -35,7 +34,7 @@ function setupKanbanDragAndDrop() {
 
                 if (error) {
                     alert("Lỗi cập nhật trạng thái: " + error.message);
-                    // Revert on error by moving the item back
+                    // Trả lại thẻ về vị trí cũ nếu có lỗi
                     evt.from.appendChild(evt.item);
                 }
             },
