@@ -7,7 +7,6 @@ import { openProfileModal } from './components/Modals.js';
 import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './utils/uiUtils.js';
 
 // --- State (Trạng thái Toàn cục) ---
-// Tạo một đối tượng 'state' trên 'window' để các module khác có thể truy cập
 window.state = {
     currentDate: new Date(),
     currentView: 'week',
@@ -16,7 +15,6 @@ window.state = {
     userProfile: { name: 'Tôi', email: 'me@example.com' },
     teamMembers: [],
     supabase: null,
-    // Các hằng số cũng được đưa vào state để dễ quản lý
     PRIORITIES: { 'Cao': 'bg-red-100 text-red-800', 'Trung bình': 'bg-yellow-100 text-yellow-800', 'Thấp': 'bg-blue-100 text-blue-800' },
     CATEGORIES: ['Chung', 'Công việc', 'Cá nhân', 'Học tập', 'Dự án'],
     STATUSES: ['Cần làm', 'Đang làm', 'Hoàn thành', 'Tạm dừng'],
@@ -25,7 +23,7 @@ window.state = {
     CATEGORY_COLORS: ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'],
 };
 
-// --- DOM Elements (Các thành phần HTML) ---
+// --- DOM Elements ---
 const appContainer = document.getElementById('app-container');
 const quoteDisplay = document.getElementById('quote-display');
 const toggleButtons = {
@@ -36,11 +34,7 @@ const toggleButtons = {
 };
 const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
 
-// --- Core Functions (Các hàm Lõi) ---
-
-/**
- * Hiển thị giao diện tương ứng với trạng thái 'currentView' hiện tại.
- */
+// --- Core Functions ---
 async function renderCurrentView() {
     showLoading();
     const viewRenderers = {
@@ -50,7 +44,6 @@ async function renderCurrentView() {
         kanban: renderKanbanView,
     };
     
-    // Hiện hoặc ẩn bộ lọc tùy theo giao diện
     const filtersContainer = document.getElementById('filters-container');
     if (['dashboard', 'kanban'].includes(state.currentView)) {
         filtersContainer.classList.remove('hidden');
@@ -58,19 +51,13 @@ async function renderCurrentView() {
         filtersContainer.classList.add('hidden');
     }
 
-    // Gọi hàm render tương ứng
     if (viewRenderers[state.currentView]) {
         await viewRenderers[state.currentView]();
     }
     hideLoading();
 }
-// Đưa hàm ra global để các component có thể gọi lại sau khi thay đổi dữ liệu
 window.renderCurrentView = renderCurrentView;
 
-/**
- * Chuyển đổi giữa các chế độ xem (Lịch Tuần, Tháng, Dashboard, Kanban).
- * @param {string} view - Tên của chế độ xem cần chuyển tới.
- */
 function switchView(view) {
     if (view === state.currentView) return;
     state.currentView = view;
@@ -78,7 +65,6 @@ function switchView(view) {
     Object.values(toggleButtons).forEach(btn => btn.classList.remove('active'));
     if (toggleButtons[view]) toggleButtons[view].classList.add('active');
     
-    // Hủy các biểu đồ cũ khi rời khỏi Dashboard để tránh rò rỉ bộ nhớ
     if (view !== 'dashboard') {
         Object.values(state.chartInstances).forEach(chart => chart.destroy());
         state.chartInstances = {};
@@ -86,9 +72,6 @@ function switchView(view) {
     renderCurrentView();
 }
 
-/**
- * Tải thông tin người dùng và nhóm từ Local Storage.
- */
 function loadUserData() {
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) state.userProfile = JSON.parse(savedProfile);
@@ -97,11 +80,10 @@ function loadUserData() {
     updateProfileUI(state.userProfile);
 }
 
-// --- INITIALIZATION (Khởi tạo Ứng dụng) ---
+// --- INITIALIZATION ---
 (async function init() {
     loadUserData();
     
-    // Gán sự kiện cho các nút chuyển đổi giao diện và nút hồ sơ
     Object.keys(toggleButtons).forEach(key => {
         if(toggleButtons[key]) {
             toggleButtons[key].addEventListener('click', () => switchView(key));
@@ -109,10 +91,9 @@ function loadUserData() {
     });
     document.getElementById('profile-btn').addEventListener('click', openProfileModal);
 
-    // Lấy Supabase client và bắt đầu render ứng dụng
     const supabase = getSupabaseClient();
     if (supabase) {
-        state.supabase = supabase; // Lưu client vào state để các module khác sử dụng
+        state.supabase = supabase;
         appContainer.classList.remove('hidden');
         quoteDisplay.textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
         await renderCurrentView();
