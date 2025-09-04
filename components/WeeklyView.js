@@ -88,6 +88,54 @@ function renderWeeklyGrid(weekDays, tasks, habits, habitEntries, notes) {
     }).join('');
 }
 
+function renderCalendar(dateToRender) {
+    const calendarContainer = document.getElementById('calendar-container');
+    if (!calendarContainer) return;
+    const today = new Date();
+    const month = dateToRender.getMonth();
+    const year = dateToRender.getFullYear();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let startingDay = firstDayOfMonth.getDay();
+    startingDay = startingDay === 0 ? 6 : startingDay - 1; 
+
+    let calendarHTML = `
+        <div class="flex justify-between items-center mb-2">
+            <h4 class="font-semibold">${dateToRender.toLocaleString('vi-VN', { month: 'long', year: 'numeric' })}</h4>
+        </div>
+        <div class="calendar-grid text-sm">
+            ${['T2','T3','T4','T5','T6','T7','CN'].map(day => `<div class="font-bold text-gray-500">${day}</div>`).join('')}
+    `;
+    
+    for(let i = 0; i < startingDay; i++) { calendarHTML += `<div></div>`; }
+
+    const weekDays = getWeekDays(dateToRender);
+    const weekDayStrings = weekDays.map(d => formatDate(d));
+
+    for(let i = 1; i <= daysInMonth; i++) {
+       const dayDate = new Date(year, month, i);
+       const dayStr = formatDate(dayDate);
+       let classes = 'calendar-day py-1';
+       if(weekDayStrings.includes(dayStr)) classes += ' week-highlight';
+       if(i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) classes += ' current-day';
+       calendarHTML += `<div class="${classes}">${i}</div>`;
+    }
+    calendarHTML += `</div>`;
+    calendarContainer.innerHTML = calendarHTML;
+}
+
+function updateWeeklyProgress(tasks) {
+    const weeklyProgressBar = document.getElementById('weekly-progress-bar');
+    const weeklyProgressText = document.getElementById('weekly-progress-text');
+    if (!weeklyProgressBar || !weeklyProgressText) return;
+    
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.is_completed).length;
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    weeklyProgressBar.style.width = `${progress}%`;
+    weeklyProgressText.textContent = `${progress}%`;
+}
+
 function setupWeeklyViewEventListeners() {
     const weeklyView = document.getElementById('weekly-view-container');
     if (!weeklyView) return;
@@ -103,7 +151,42 @@ function setupWeeklyViewEventListeners() {
         if (taskTarget) { openAddTaskModal(taskTarget.dataset.date); }
     });
     
-    // ... (rest of the event listeners)
+    const debouncedSaveNote = (func, timeout = 500) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        };
+    };
+
+    weeklyView.addEventListener('input', (event) => {
+        const target = event.target;
+        if (target.classList.contains('daily-note')) {
+           debouncedSaveNote(async () => {
+                const noteData = { note_date: target.dataset.date, content: target.value };
+                await state.supabase.from('daily_notes').upsert(noteData);
+           })();
+        }
+   });
+
+   weeklyView.addEventListener('change', async (event) => {
+        const target = event.target;
+        if (target.classList.contains('habit-checkbox')) {
+            const habit_id = target.dataset.habitId;
+            const entry_date = target.dataset.date;
+            if (target.checked) {
+                await state.supabase.from('habit_entries').upsert({ habit_id, entry_date });
+            } else {
+                await state.supabase.from('habit_entries').delete().match({ habit_id, entry_date });
+            }
+        }
+        if (target.classList.contains('task-checkbox')) {
+           const taskId = target.dataset.taskId;
+           const isCompleted = target.checked;
+           await state.supabase.from('tasks').update({ is_completed: isCompleted }).match({ id: taskId });
+           await window.renderCurrentView();
+        }
+   });
 }
 
 export async function renderWeeklyView() {
@@ -144,9 +227,12 @@ export async function renderWeeklyView() {
     `;
     
     document.getElementById('week-range').textContent = `${weekStart.toLocaleDateString('vi-VN')} - ${weekEnd.toLocaleDateString('vi-VN')}`;
+    renderCalendar(state.currentDate);
     
     const { tasks, habits, habitEntries, notes } = await fetchDataForWeek(weekStart, weekEnd);
     
     renderWeeklyGrid(weekDays, tasks, habits, habitEntries, notes);
+    updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
+
