@@ -1,10 +1,11 @@
-import { getSupabaseClient, showSupabaseModal } from './services/supabaseService.js';
+// Sửa lỗi: Gọi showSupabaseModal từ uiUtils.js
+import { getSupabaseClient } from './services/supabaseService.js';
 import { renderWeeklyView } from './components/WeeklyView.js';
 import { renderMonthlyView } from './components/MonthlyView.js';
 import { renderDashboardView } from './components/DashboardView.js';
 import { renderKanbanView } from './components/KanbanView.js';
 import { openProfileModal } from './components/Modals.js';
-import { showLoading, hideLoading } from './utils/uiUtils.js';
+import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './utils/uiUtils.js';
 
 // --- State ---
 window.state = {
@@ -14,6 +15,7 @@ window.state = {
     currentFilters: { priority: 'all', category: 'all', person: 'all' },
     userProfile: { name: 'Tôi', email: 'me@example.com' },
     teamMembers: [],
+    supabase: null,
 };
 
 // --- DOM Elements ---
@@ -42,7 +44,7 @@ async function renderCurrentView() {
     }
     hideLoading();
 }
-window.renderCurrentView = renderCurrentView; // Make it globally accessible for components
+window.renderCurrentView = renderCurrentView;
 
 function switchView(view) {
     if (view === state.currentView) return;
@@ -63,14 +65,7 @@ function loadUserData() {
     if (savedProfile) state.userProfile = JSON.parse(savedProfile);
     const savedTeam = localStorage.getItem('teamMembers');
     if (savedTeam) state.teamMembers = JSON.parse(savedTeam);
-    updateProfileUI();
-}
-
-function updateProfileUI() {
-    const nameDisplay = document.getElementById('user-name-display');
-    const avatarDisplay = document.getElementById('user-avatar');
-    nameDisplay.textContent = state.userProfile.name || 'Hồ sơ';
-    avatarDisplay.textContent = state.userProfile.name ? state.userProfile.name.charAt(0).toUpperCase() : '?';
+    updateProfileUI(state.userProfile);
 }
 
 // --- INITIALIZATION ---
@@ -84,7 +79,7 @@ function updateProfileUI() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-        window.supabase = supabase; // Make it globally accessible
+        state.supabase = supabase;
         appContainer.classList.remove('hidden');
         quoteDisplay.textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
         await renderCurrentView();
@@ -92,3 +87,4 @@ function updateProfileUI() {
         showSupabaseModal();
     }
 })();
+
