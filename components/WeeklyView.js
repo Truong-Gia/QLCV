@@ -3,7 +3,10 @@ import { stringToColor } from '../utils/uiUtils.js';
 import { openAddTaskModal, openHabitsModal, openReviewModal } from './Modals.js';
 
 const state = window.state;
-
+if (!state || !state.currentDate) {
+  console.error("state hoặc currentDate chưa được khởi tạo");
+  return;
+}
 async function fetchDataForWeek(startDate, endDate) {
     const start = formatDate(startDate);
     const end = formatDate(endDate);
@@ -235,3 +238,4 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
+
