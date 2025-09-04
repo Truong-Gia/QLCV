@@ -98,7 +98,6 @@ export function showSupabaseModal() {
     }
 }
 
-// SỬA LỖI: Thêm từ khóa 'export' để các file khác có thể sử dụng hàm này
 export function stringToColor(str) {
     if (!str) return '#e0e7ff';
     let hash = 0;
