@@ -25,4 +25,3 @@ body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
 .month-day { border: 1px solid #e5e7eb; min-height: 120px; }
 .month-day.other-month { background-color: #f9fafb; color: #9ca3af; }
 .avatar { width: 20px; height: 20px; border-radius: 50%; background-color: #e0e7ff; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; flex-shrink: 0;}
-
