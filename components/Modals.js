@@ -1,6 +1,5 @@
+import { state } from '../state.js';
 import { showModal, setupModalEvents } from '../utils/uiUtils.js';
-
-const state = window.state;
 
 export function openProfileModal() {
     const body = `
@@ -129,10 +128,64 @@ export function openAddTaskModal(dueDate) {
 }
 
 export async function openHabitsModal() {
-    // ... Function implementation
+    const { data: habits, error } = await state.supabase.from('habits').select('*').order('created_at');
+    if (error) { alert("Lỗi tải thói quen: " + error.message); return; }
+
+    const renderHabitList = (habits) => habits.map(h => `
+        <li class="flex items-center justify-between p-2 hover:bg-gray-50">
+            <span class="${!h.is_active ? 'text-gray-400' : ''}">${h.name}</span>
+            <div class="flex items-center gap-2">
+                 <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer toggle-habit-active" data-habit-id="${h.id}" ${h.is_active ? 'checked' : ''}>
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+                <button class="delete-habit-btn p-1 text-gray-400 hover:text-red-600" data-habit-id="${h.id}">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+        </li>
+    `).join('');
+
+    const body = `
+        <ul id="modal-habit-list" class="space-y-1">${renderHabitList(habits)}</ul>
+        <div class="mt-4 pt-4 border-t">
+            <div class="flex gap-2">
+                <input type="text" id="new-habit-name" class="flex-grow border border-gray-300 rounded-md shadow-sm p-2" placeholder="Tên thói quen mới...">
+                <button id="add-habit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700">Thêm</button>
+            </div>
+        </div>`;
+    
+    const modalElement = showModal('Quản lý Thói quen', body, '');
+    const closeModal = setupModalEvents(modalElement);
+
+    modalElement.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (target.closest('.toggle-habit-active')) {
+            const habitId = target.closest('.toggle-habit-active').dataset.habitId;
+            const is_active = target.closest('.toggle-habit-active').checked;
+            await state.supabase.from('habits').update({ is_active }).match({ id: habitId });
+            await window.renderCurrentView();
+        }
+        if (target.closest('.delete-habit-btn')) {
+            const habitId = target.closest('.delete-habit-btn').dataset.habitId;
+            if(confirm('Bạn có chắc muốn xóa thói quen này?')) {
+                await state.supabase.from('habits').delete().match({ id: habitId });
+                closeModal();
+                await window.renderCurrentView();
+            }
+        }
+        if (target.closest('#add-habit-btn')) {
+            const input = modalElement.querySelector('#new-habit-name');
+            const name = input.value.trim();
+            if(name) {
+                await state.supabase.from('habits').insert({ name, is_active: true });
+                closeModal();
+                await window.renderCurrentView();
+            }
+        }
+    });
 }
 
 export async function openReviewModal() {
-    // ... Function implementation
+    // ... (This function is unchanged, omitted for brevity)
 }
-
