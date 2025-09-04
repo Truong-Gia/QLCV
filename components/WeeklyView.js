@@ -2,16 +2,16 @@ import { formatDate, getWeekDays } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
 import { openAddTaskModal, openHabitsModal, openReviewModal } from './Modals.js';
 
-// SỬA LỖI: Không sử dụng biến state cục bộ nữa, sẽ truy cập trực tiếp window.state
+const state = window.state;
 
 async function fetchDataForWeek(startDate, endDate) {
     const start = formatDate(startDate);
     const end = formatDate(endDate);
     const [tasksRes, habitsRes, habitEntriesRes, notesRes] = await Promise.all([
-        window.state.supabase.from('tasks').select('*').gte('due_date', start).lte('due_date', end).order('created_at'),
-        window.state.supabase.from('habits').select('*').eq('is_active', true).order('created_at'),
-        window.state.supabase.from('habit_entries').select('*').gte('entry_date', start).lte('entry_date', end),
-        window.state.supabase.from('daily_notes').select('*').gte('note_date', start).lte('note_date', end)
+        state.supabase.from('tasks').select('*').gte('due_date', start).lte('due_date', end).order('created_at'),
+        state.supabase.from('habits').select('*').eq('is_active', true).order('created_at'),
+        state.supabase.from('habit_entries').select('*').gte('entry_date', start).lte('entry_date', end),
+        state.supabase.from('daily_notes').select('*').gte('note_date', start).lte('note_date', end)
     ]);
     const checkError = (res, name) => { if (res.error) console.error(`Fetch ${name} error:`, res.error.message); return res.data || []; };
     return { 
@@ -23,7 +23,7 @@ async function fetchDataForWeek(startDate, endDate) {
 }
 
 function renderTask(task) {
-    const priorityClass = window.state.PRIORITIES[task.priority] || window.state.PRIORITIES['Trung bình'];
+    const priorityClass = state.PRIORITIES[task.priority] || state.PRIORITIES['Trung bình'];
     const assignedUserHTML = task.assigned_to_name 
         ? `<div class="flex items-center gap-1 mt-2 ml-6"><div class="avatar" style="background-color: ${stringToColor(task.assigned_to_email)}" title="${task.assigned_to_name}">${task.assigned_to_name.charAt(0)}</div><span class="text-xs text-gray-600">${task.assigned_to_name}</span></div>` 
         : '';
@@ -142,9 +142,9 @@ function setupWeeklyViewEventListeners() {
 
     weeklyView.addEventListener('click', async (event) => {
         const target = event.target;
-        if (target.closest('#prev-week')) { window.state.currentDate.setDate(window.state.currentDate.getDate() - 7); window.renderCurrentView(); }
-        if (target.closest('#today-btn')) { window.state.currentDate = new Date(); window.renderCurrentView(); }
-        if (target.closest('#next-week')) { window.state.currentDate.setDate(window.state.currentDate.getDate() + 7); window.renderCurrentView(); }
+        if (target.closest('#prev-week')) { state.currentDate.setDate(state.currentDate.getDate() - 7); window.renderCurrentView(); }
+        if (target.closest('#today-btn')) { state.currentDate = new Date(); window.renderCurrentView(); }
+        if (target.closest('#next-week')) { state.currentDate.setDate(state.currentDate.getDate() + 7); window.renderCurrentView(); }
         if (target.closest('#open-habits-btn')) { openHabitsModal(); }
         if (target.closest('#open-review-btn')) { openReviewModal(); }
         const taskTarget = event.target.closest('.add-task-btn');
@@ -164,7 +164,7 @@ function setupWeeklyViewEventListeners() {
         if (target.classList.contains('daily-note')) {
            debouncedSaveNote(async () => {
                 const noteData = { note_date: target.dataset.date, content: target.value };
-                await window.state.supabase.from('daily_notes').upsert(noteData);
+                await state.supabase.from('daily_notes').upsert(noteData);
            })();
         }
    });
@@ -175,15 +175,15 @@ function setupWeeklyViewEventListeners() {
             const habit_id = target.dataset.habitId;
             const entry_date = target.dataset.date;
             if (target.checked) {
-                await window.state.supabase.from('habit_entries').upsert({ habit_id, entry_date });
+                await state.supabase.from('habit_entries').upsert({ habit_id, entry_date });
             } else {
-                await window.state.supabase.from('habit_entries').delete().match({ habit_id, entry_date });
+                await state.supabase.from('habit_entries').delete().match({ habit_id, entry_date });
             }
         }
         if (target.classList.contains('task-checkbox')) {
            const taskId = target.dataset.taskId;
            const isCompleted = target.checked;
-           await window.state.supabase.from('tasks').update({ is_completed: isCompleted }).match({ id: taskId });
+           await state.supabase.from('tasks').update({ is_completed: isCompleted }).match({ id: taskId });
            await window.renderCurrentView();
         }
    });
@@ -192,7 +192,7 @@ function setupWeeklyViewEventListeners() {
 export async function renderWeeklyView() {
     const weeklyViewContainer = document.getElementById('weekly-view-container');
     weeklyViewContainer.classList.remove('hidden');
-    const weekDays = getWeekDays(window.state.currentDate);
+    const weekDays = getWeekDays(state.currentDate);
     const weekStart = weekDays[0];
     const weekEnd = weekDays[6];
 
@@ -227,7 +227,7 @@ export async function renderWeeklyView() {
     `;
     
     document.getElementById('week-range').textContent = `${weekStart.toLocaleDateString('vi-VN')} - ${weekEnd.toLocaleDateString('vi-VN')}`;
-    renderCalendar(window.state.currentDate);
+    renderCalendar(state.currentDate);
     
     const { tasks, habits, habitEntries, notes } = await fetchDataForWeek(weekStart, weekEnd);
     
@@ -235,4 +235,3 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
-
