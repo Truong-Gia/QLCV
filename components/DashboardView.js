@@ -2,12 +2,6 @@ import { state } from '../state.js';
 import { formatDate } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
 
-// Bảng màu mới rực rỡ và dễ nhận dạng hơn
-const NEW_STATUS_COLORS = { 'Cần làm': '#ef4444', 'Đang làm': '#f59e0b', 'Hoàn thành': '#10b981', 'Tạm dừng': '#6b7280' };
-const NEW_PRIORITY_COLORS = { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' };
-const VIBRANT_PALETTE = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6b7280'];
-
-
 function createChart(canvasId, type, labels, data, colors) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (state.chartInstances[canvasId]) {
@@ -114,17 +108,16 @@ export async function renderDashboardView() {
     renderTaskList('today-tasks-list', tasks.filter(t => t.due_date === todayStr));
     renderTaskList('upcoming-tasks-list', tasks.filter(t => t.due_date > todayStr && !t.is_completed).slice(0, 10));
 
-    // Charts with new colors
+    // Charts
     const statusCounts = tasks.reduce((acc, t) => { const s = t.status || 'Cần làm'; acc[s] = (acc[s] || 0) + 1; return acc; }, {});
-    createChart('status-chart', 'pie', Object.keys(statusCounts), Object.values(statusCounts), Object.keys(statusCounts).map(s => NEW_STATUS_COLORS[s] || '#d1d5db'));
+    createChart('status-chart', 'pie', Object.keys(statusCounts), Object.values(statusCounts), Object.keys(statusCounts).map(s => state.STATUS_COLORS[s] || '#d1d5db'));
     
     const priorityCounts = tasks.reduce((acc, t) => { const p = t.priority || 'Trung bình'; acc[p] = (acc[p] || 0) + 1; return acc; }, {});
-    createChart('priority-chart', 'doughnut', Object.keys(priorityCounts), Object.values(priorityCounts), Object.keys(priorityCounts).map(p => NEW_PRIORITY_COLORS[p] || '#d1d5db'));
+    createChart('priority-chart', 'doughnut', Object.keys(priorityCounts), Object.values(priorityCounts), Object.keys(priorityCounts).map(p => state.PRIORITY_COLORS[p] || '#d1d5db'));
 
     const categoryCounts = tasks.reduce((acc, t) => { const c = t.category || 'Chung'; acc[c] = (acc[c] || 0) + 1; return acc; }, {});
-    createChart('category-chart', 'pie', Object.keys(categoryCounts), Object.values(categoryCounts), VIBRANT_PALETTE);
+    createChart('category-chart', 'pie', Object.keys(categoryCounts), Object.values(categoryCounts), state.CATEGORY_COLORS);
 
     const personCounts = tasks.reduce((acc, t) => { const name = t.assigned_to_name || 'Chưa giao'; acc[name] = (acc[name] || 0) + 1; return acc; }, {});
-    createChart('person-chart', 'bar', Object.keys(personCounts), Object.values(personCounts), VIBRANT_PALETTE);
+    createChart('person-chart', 'bar', Object.keys(personCounts), Object.values(personCounts), state.CATEGORY_COLORS);
 }
-
