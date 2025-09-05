@@ -21,7 +21,6 @@ import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './
         const toggleMonthBtn = document.getElementById('toggle-month-view');
         const toggleDashboardBtn = document.getElementById('toggle-dashboard-view');
         const toggleKanbanBtn = document.getElementById('toggle-kanban-view');
-};
 
 // --- Constants ---
         const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới.", "Cách tốt nhất để dự đoán tương lai là tạo ra nó.", "Có công mài sắc, có ngày nên kim."];
@@ -173,6 +172,7 @@ import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './
         showSupabaseModal();
     }
 })();
+
 
 
 
