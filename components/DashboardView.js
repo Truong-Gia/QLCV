@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { formatDate } from '../utils/dateUtils.js';
+import { stringToColor } from '../utils/uiUtils.js';
 
 function createChart(canvasId, type, labels, data, colors) {
     const ctx = document.getElementById(canvasId).getContext('2d');
@@ -40,7 +41,7 @@ function renderTaskList(elementId, tasks) {
             <p class="${task.is_completed ? 'line-through text-gray-400' : ''}">${task.content}</p>
             <div class="flex items-center justify-between text-xs text-gray-400 mt-1">
                 <span>${formatDate(new Date(task.due_date))}</span>
-                ${task.assigned_to_name ? `<div class="flex items-center gap-1"><div class="avatar" style="background-color: ${state.stringToColor(task.assigned_to_email)}" title="${task.assigned_to_name}">${task.assigned_to_name.charAt(0)}</div><span>${task.assigned_to_name}</span></div>` : ''}
+                ${task.assigned_to_name ? `<div class="flex items-center gap-1"><div class="avatar" style="background-color: ${stringToColor(task.assigned_to_email)}" title="${task.assigned_to_name}">${task.assigned_to_name.charAt(0)}</div><span>${task.assigned_to_name}</span></div>` : ''}
             </div>
         </div>
     `).join('');
@@ -101,7 +102,7 @@ export async function renderDashboardView() {
     monthlyProgressBar.style.width = `${progress}%`;
     monthlyProgressBar.textContent = `${progress}%`;
     document.getElementById('monthly-progress-title').textContent = `Tiến độ Tháng ${month + 1}`;
-    
+
     // Task Lists
     renderTaskList('overdue-tasks-list', tasks.filter(t => t.due_date < todayStr && !t.is_completed));
     renderTaskList('today-tasks-list', tasks.filter(t => t.due_date === todayStr));
@@ -120,5 +121,3 @@ export async function renderDashboardView() {
     const personCounts = tasks.reduce((acc, t) => { const name = t.assigned_to_name || 'Chưa giao'; acc[name] = (acc[name] || 0) + 1; return acc; }, {});
     createChart('person-chart', 'bar', Object.keys(personCounts), Object.values(personCounts), state.CATEGORY_COLORS);
 }
-
-
