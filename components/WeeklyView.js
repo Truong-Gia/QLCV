@@ -3,8 +3,6 @@ import { formatDate, getWeekDays } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
 import { openAddTaskModal, openHabitsModal, openReviewModal } from './Modals.js';
 
-const state = window.state;
-
 async function fetchDataForWeek(startDate, endDate) {
     const start = formatDate(startDate);
     const end = formatDate(endDate);
@@ -151,7 +149,7 @@ function setupWeeklyViewEventListeners() {
         const taskTarget = event.target.closest('.add-task-btn');
         if (taskTarget) { openAddTaskModal(taskTarget.dataset.date); }
     });
-    
+
     const debouncedSaveNote = (func, timeout = 500) => {
         let timer;
         return (...args) => {
@@ -236,7 +234,3 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
-
-
-
-
