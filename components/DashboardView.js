@@ -101,9 +101,6 @@ export async function renderDashboardView() {
     monthlyProgressBar.style.width = `${progress}%`;
     monthlyProgressBar.textContent = `${progress}%`;
     document.getElementById('monthly-progress-title').textContent = `Tiến độ Tháng ${month + 1}`;
-
-    // trong map/render:
-    const color = state.stringToColor(item.assignee || item.project || item.name);
     
     // Task Lists
     renderTaskList('overdue-tasks-list', tasks.filter(t => t.due_date < todayStr && !t.is_completed));
@@ -123,4 +120,5 @@ export async function renderDashboardView() {
     const personCounts = tasks.reduce((acc, t) => { const name = t.assigned_to_name || 'Chưa giao'; acc[name] = (acc[name] || 0) + 1; return acc; }, {});
     createChart('person-chart', 'bar', Object.keys(personCounts), Object.values(personCounts), state.CATEGORY_COLORS);
 }
+
 
