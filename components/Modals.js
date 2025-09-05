@@ -1,5 +1,14 @@
 import { state } from '../state.js';
 import { showModal, setupModalEvents } from '../utils/uiUtils.js';
+import { getWeekDays } from '../utils/dateUtils.js';
+
+const debounce = (func, timeout = 500) => {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+};
 
 export function openProfileModal() {
     const body = `
@@ -187,5 +196,58 @@ export async function openHabitsModal() {
 }
 
 export async function openReviewModal() {
-    // ... (This function is unchanged, omitted for brevity)
+    const weekDays = getWeekDays(state.currentDate);
+    const week_identifier = `${weekDays[0].getFullYear()}-W${Math.ceil((((weekDays[0] - new Date(weekDays[0].getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
+    
+    const { data, error } = await state.supabase.from('weekly_reviews').select('*').eq('week_identifier', week_identifier).single();
+    
+    const body = `
+        <div class="space-y-4 text-sm">
+            <div>
+                <label class="font-semibold text-gray-700">Điều tôi đã làm tốt trong tuần này:</label>
+                <textarea id="review-good" class="mt-1 w-full border rounded p-2 h-24">${data?.good || ''}</textarea>
+            </div>
+             <div>
+                <label class="font-semibold text-gray-700">Điều tôi có thể cải thiện:</label>
+                <textarea id="review-improve" class="mt-1 w-full border rounded p-2 h-24">${data?.improve || ''}</textarea>
+            </div>
+             <div>
+                <label class="font-semibold text-gray-700">Điều tôi biết ơn:</label>
+                <textarea id="review-grateful" class="mt-1 w-full border rounded p-2 h-24">${data?.grateful || ''}</textarea>
+            </div>
+        </div>
+    `;
+    const footer = `<div id="review-save-status" class="text-sm text-gray-500 italic">Tự động lưu...</div>`;
+    const modalElement = showModal(`Tổng kết Tuần (${week_identifier})`, body, footer);
+    setupModalEvents(modalElement);
+    
+    const statusEl = modalElement.querySelector('#review-save-status');
+
+    const saveReview = debounce(async () => {
+        statusEl.textContent = 'Đang lưu...';
+        statusEl.classList.remove('text-green-600', 'text-red-500');
+
+        const reviewData = {
+            week_identifier,
+            good: modalElement.querySelector('#review-good').value,
+            improve: modalElement.querySelector('#review-improve').value,
+            grateful: modalElement.querySelector('#review-grateful').value,
+        };
+        const { error: upsertError } = await state.supabase.from('weekly_reviews').upsert(reviewData);
+
+        if (upsertError) {
+            console.error("Error saving review:", upsertError);
+            statusEl.textContent = 'Lỗi! Không thể lưu.';
+            statusEl.classList.add('text-red-500');
+            alert(`Lỗi khi lưu Tổng kết Tuần: ${upsertError.message}`);
+        } else {
+            statusEl.textContent = 'Đã lưu ✓';
+            statusEl.classList.add('text-green-600');
+        }
+    }, 1000);
+
+    modalElement.querySelector('#review-good').addEventListener('input', saveReview);
+    modalElement.querySelector('#review-improve').addEventListener('input', saveReview);
+    modalElement.querySelector('#review-grateful').addEventListener('input', saveReview);
 }
+
