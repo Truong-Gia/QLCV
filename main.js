@@ -32,51 +32,125 @@ import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './
         const PRIORITY_COLORS = { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' };
         const CATEGORY_COLORS = ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'];
 
-// --- Core Functions ---
-async function renderCurrentView() {
-    showLoading();
-    const viewRenderers = {
-        week: renderWeeklyView,
-        month: renderMonthlyView,
-        dashboard: renderDashboardView,
-        kanban: renderKanbanView,
-    };
-    
-    const filtersContainer = document.getElementById('filters-container');
-    if (['dashboard', 'kanban'].includes(state.currentView)) {
-        filtersContainer.classList.remove('hidden');
-    } else {
-        filtersContainer.classList.add('hidden');
-    }
+// --- RENDER FUNCTIONS ---
+        async function renderCurrentView() {
+            showLoading();
+            const viewRenderers = {
+                week: renderWeeklyView, month: renderMonthlyView,
+                dashboard: renderDashboardView, kanban: renderKanbanView,
+            };
+            const filtersViews = ['dashboard', 'kanban'];
+            if (filtersViews.includes(currentView)) {
+                filtersContainer.classList.remove('hidden');
+                await renderFilters();
+            } else {
+                filtersContainer.classList.add('hidden');
+            }
+            if(viewRenderers[currentView]) await viewRenderers[currentView]();
+            hideLoading();
+        }
+        
+        async function renderFilters() {
+            const priorityFilter = document.getElementById('priority-filter');
+            priorityFilter.innerHTML = `<option value="all">Tất cả</option>` + Object.keys(PRIORITIES).map(p => `<option value="${p}" ${currentFilters.priority === p ? 'selected' : ''}>${p}</option>`).join('');
 
-    if (viewRenderers[state.currentView]) {
-        await viewRenderers[state.currentView]();
-    }
-    hideLoading();
-}
-window.renderCurrentView = renderCurrentView;
+            const { data, error } = await supabaseClient.from('tasks').select('category');
+            if(data) {
+                const uniqueCategories = [...new Set(data.map(t => t.category).filter(Boolean))];
+                CATEGORIES = [...new Set([...CATEGORIES, ...uniqueCategories])];
+            }
+            const categoryFilter = document.getElementById('category-filter');
+            categoryFilter.innerHTML = `<option value="all">Tất cả</option>` + CATEGORIES.map(c => `<option value="${c}" ${currentFilters.category === c ? 'selected' : ''}>${c}</option>`).join('');
+            
+            const personFilter = document.getElementById('person-filter');
+            const allUsers = [userProfile, ...teamMembers];
+            personFilter.innerHTML = `<option value="all">Tất cả</option>` + `<option value="unassigned">Chưa giao</option>` + allUsers.map(u => `<option value="${u.email}" ${currentFilters.person === u.email ? 'selected' : ''}>${u.name}</option>`).join('');
+        }
 
-function switchView(view) {
-    if (view === state.currentView) return;
-    state.currentView = view;
-    
-    Object.values(toggleButtons).forEach(btn => btn.classList.remove('active'));
-    if (toggleButtons[view]) toggleButtons[view].classList.add('active');
-    
-    if (view !== 'dashboard') {
-        Object.values(state.chartInstances).forEach(chart => chart.destroy());
-        state.chartInstances = {};
-    }
-    renderCurrentView();
-}
 
-function loadUserData() {
-    const savedProfile = localStorage.getItem('userProfile');
-    if (savedProfile) state.userProfile = JSON.parse(savedProfile);
-    const savedTeam = localStorage.getItem('teamMembers');
-    if (savedTeam) state.teamMembers = JSON.parse(savedTeam);
-    updateProfileUI(state.userProfile);
-}
+// --- USER & TEAM MANAGEMENT ---
+        function loadUserData() {
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) userProfile = JSON.parse(savedProfile);
+            const savedTeam = localStorage.getItem('teamMembers');
+            if (savedTeam) teamMembers = JSON.parse(savedTeam);
+            updateProfileUI();
+        }
+
+        function saveUserData() {
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            localStorage.setItem('teamMembers', JSON.stringify(teamMembers));
+        }
+
+        function updateProfileUI() {
+            const nameDisplay = document.getElementById('user-name-display');
+            const avatarDisplay = document.getElementById('user-avatar');
+            nameDisplay.textContent = userProfile.name || 'Hồ sơ';
+            avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
+            avatarDisplay.style.backgroundColor = stringToColor(userProfile.email || '');
+        }
+
+        function openProfileModal() {
+            const body = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tên của bạn</label>
+                        <input id="profile-name-input" type="text" value="${userProfile.name}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email của bạn (duy nhất)</label>
+                        <input id="profile-email-input" type="email" value="${userProfile.email}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <hr>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Thành viên nhóm (mỗi người một dòng)</label>
+                        <textarea id="team-members-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 h-24" placeholder="Nguyễn Văn A, a@example.com\nhoặc chỉ cần email:\nb@example.com">${teamMembers.map(m => `${m.name}, ${m.email}`).join('\n')}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">Định dạng: "Tên, email" hoặc chỉ "email". Email là duy nhất.</p>
+                    </div>
+                </div>`;
+            const footer = `<div class="flex-grow"></div><button id="save-profile-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Lưu thay đổi</button>`;
+            
+            const modalElement = showModal('Hồ sơ & Quản lý Nhóm', body, footer);
+            const closeModal = setupModalEvents(modalElement);
+            
+            modalElement.querySelector('#save-profile-btn').addEventListener('click', () => {
+                const name = modalElement.querySelector('#profile-name-input').value.trim();
+                const email = modalElement.querySelector('#profile-email-input').value.trim();
+                if (!name || !email) {
+                    alert('Tên và Email của bạn không được để trống.');
+                    return;
+                }
+                userProfile = { name, email };
+
+                const teamText = modalElement.querySelector('#team-members-input').value.trim();
+                teamMembers = teamText.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line) // Bỏ qua các dòng trống
+                    .map(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 2) {
+                            // Định dạng: Tên, email
+                            const email = parts.pop().trim();
+                            const name = parts.join(',').trim();
+                            if (name && email.includes('@')) {
+                                return { name: name, email: email };
+                            }
+                        } else if (line.includes('@')) {
+                            // Định dạng: chỉ có email
+                            const email = line.trim();
+                            const name = email.split('@')[0]; // Lấy phần trước @ làm tên tạm
+                            return { name: name, email: email };
+                        }
+                        return null; // Bỏ qua các dòng không hợp lệ
+                    }).filter(Boolean);
+
+                saveUserData();
+                updateProfileUI();
+                renderCurrentView();
+                closeModal();
+            });
+        }
+
 
 // --- INITIALIZATION ---
 (async function init() {
@@ -99,5 +173,6 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
+
 
 
