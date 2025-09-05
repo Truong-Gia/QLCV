@@ -31,40 +31,29 @@ import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './
         const PRIORITY_COLORS = { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' };
         const CATEGORY_COLORS = ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'];
 
-// --- RENDER FUNCTIONS ---
-        async function renderCurrentView() {
-            showLoading();
-            const viewRenderers = {
-                week: renderWeeklyView, month: renderMonthlyView,
-                dashboard: renderDashboardView, kanban: renderKanbanView,
-            };
-            const filtersViews = ['dashboard', 'kanban'];
-            if (filtersViews.includes(currentView)) {
-                filtersContainer.classList.remove('hidden');
-                await renderFilters();
-            } else {
-                filtersContainer.classList.add('hidden');
-            }
-            if(viewRenderers[currentView]) await viewRenderers[currentView]();
-            hideLoading();
-        }
-        
-        async function renderFilters() {
-            const priorityFilter = document.getElementById('priority-filter');
-            priorityFilter.innerHTML = `<option value="all">Tất cả</option>` + Object.keys(PRIORITIES).map(p => `<option value="${p}" ${currentFilters.priority === p ? 'selected' : ''}>${p}</option>`).join('');
+// --- Core Functions ---
+async function renderCurrentView() {
+    showLoading();
+    const viewRenderers = {
+        week: renderWeeklyView,
+        month: renderMonthlyView,
+        dashboard: renderDashboardView,
+        kanban: renderKanbanView,
+    };
+    
+    const filtersContainer = document.getElementById('filters-container');
+    if (['dashboard', 'kanban'].includes(state.currentView)) {
+        filtersContainer.classList.remove('hidden');
+    } else {
+        filtersContainer.classList.add('hidden');
+    }
 
-            const { data, error } = await supabaseClient.from('tasks').select('category');
-            if(data) {
-                const uniqueCategories = [...new Set(data.map(t => t.category).filter(Boolean))];
-                CATEGORIES = [...new Set([...CATEGORIES, ...uniqueCategories])];
-            }
-            const categoryFilter = document.getElementById('category-filter');
-            categoryFilter.innerHTML = `<option value="all">Tất cả</option>` + CATEGORIES.map(c => `<option value="${c}" ${currentFilters.category === c ? 'selected' : ''}>${c}</option>`).join('');
-            
-            const personFilter = document.getElementById('person-filter');
-            const allUsers = [userProfile, ...teamMembers];
-            personFilter.innerHTML = `<option value="all">Tất cả</option>` + `<option value="unassigned">Chưa giao</option>` + allUsers.map(u => `<option value="${u.email}" ${currentFilters.person === u.email ? 'selected' : ''}>${u.name}</option>`).join('');
-        }
+    if (viewRenderers[state.currentView]) {
+        await viewRenderers[state.currentView]();
+    }
+    hideLoading();
+}
+window.renderCurrentView = renderCurrentView;
 
 
 // --- USER & TEAM MANAGEMENT ---
@@ -172,6 +161,7 @@ import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './
         showSupabaseModal();
     }
 })();
+
 
 
 
