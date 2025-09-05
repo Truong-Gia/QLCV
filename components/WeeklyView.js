@@ -1,3 +1,4 @@
+import { state } from '../state.js';
 import { formatDate, getWeekDays } from '../utils/dateUtils.js';
 import { stringToColor } from '../utils/uiUtils.js';
 import { openAddTaskModal, openHabitsModal, openReviewModal } from './Modals.js';
@@ -235,6 +236,7 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
+
 
 
 
