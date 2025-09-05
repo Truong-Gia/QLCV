@@ -8,13 +8,19 @@ import { openProfileModal } from './components/Modals.js';
 import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './utils/uiUtils.js';
 
 // --- DOM Elements ---
-const appContainer = document.getElementById('app-container');
-const quoteDisplay = document.getElementById('quote-display');
-const toggleButtons = {
-    week: document.getElementById('toggle-week-view'),
-    month: document.getElementById('toggle-month-view'),
-    dashboard: document.getElementById('toggle-dashboard-view'),
-    kanban: document.getElementById('toggle-kanban-view')
+        const appContainer = document.getElementById('app-container');
+        const modalsContainer = document.getElementById('modals-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const quoteDisplay = document.getElementById('quote-display');
+        const weeklyViewContainer = document.getElementById('weekly-view-container');
+        const monthlyViewContainer = document.getElementById('monthly-view-container');
+        const dashboardViewContainer = document.getElementById('dashboard-view-container');
+        const kanbanViewContainer = document.getElementById('kanban-view-container');
+        const filtersContainer = document.getElementById('filters-container');
+        const toggleWeekBtn = document.getElementById('toggle-week-view');
+        const toggleMonthBtn = document.getElementById('toggle-month-view');
+        const toggleDashboardBtn = document.getElementById('toggle-dashboard-view');
+        const toggleKanbanBtn = document.getElementById('toggle-kanban-view');
 };
 
 // --- Constants ---
@@ -93,4 +99,5 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
+
 
