@@ -199,29 +199,42 @@ export async function openReviewModal() {
     const weekDays = getWeekDays(state.currentDate);
     const week_identifier = `${weekDays[0].getFullYear()}-W${Math.ceil((((weekDays[0] - new Date(weekDays[0].getFullYear(), 0, 1)) / 86400000) + 1) / 7)}`;
     
-    const { data, error } = await state.supabase.from('weekly_reviews').select('*').eq('week_identifier', week_identifier).single();
-    
     const body = `
         <div class="space-y-4 text-sm">
             <div>
                 <label class="font-semibold text-gray-700">Điều tôi đã làm tốt trong tuần này:</label>
-                <textarea id="review-good" class="mt-1 w-full border rounded p-2 h-24">${data?.good || ''}</textarea>
+                <textarea id="review-good" class="mt-1 w-full border rounded p-2 h-24" placeholder="Đang tải..."></textarea>
             </div>
              <div>
                 <label class="font-semibold text-gray-700">Điều tôi có thể cải thiện:</label>
-                <textarea id="review-improve" class="mt-1 w-full border rounded p-2 h-24">${data?.improve || ''}</textarea>
+                <textarea id="review-improve" class="mt-1 w-full border rounded p-2 h-24" placeholder="Đang tải..."></textarea>
             </div>
              <div>
                 <label class="font-semibold text-gray-700">Điều tôi biết ơn:</label>
-                <textarea id="review-grateful" class="mt-1 w-full border rounded p-2 h-24">${data?.grateful || ''}</textarea>
+                <textarea id="review-grateful" class="mt-1 w-full border rounded p-2 h-24" placeholder="Đang tải..."></textarea>
             </div>
         </div>
     `;
-    const footer = `<div id="review-save-status" class="text-sm text-gray-500 italic">Tự động lưu...</div>`;
+    const footer = `<div id="review-save-status" class="text-sm text-gray-500 italic"></div>`;
     const modalElement = showModal(`Tổng kết Tuần (${week_identifier})`, body, footer);
     setupModalEvents(modalElement);
     
     const statusEl = modalElement.querySelector('#review-save-status');
+    const goodEl = modalElement.querySelector('#review-good');
+    const improveEl = modalElement.querySelector('#review-improve');
+    const gratefulEl = modalElement.querySelector('#review-grateful');
+
+    // Fetch data AFTER showing the modal
+    const { data, error } = await state.supabase.from('weekly_reviews').select('*').eq('week_identifier', week_identifier).single();
+
+    if(data) {
+        goodEl.value = data.good || '';
+        improveEl.value = data.improve || '';
+        gratefulEl.value = data.grateful || '';
+    }
+    goodEl.placeholder = improveEl.placeholder = gratefulEl.placeholder = ''; // Clear placeholder
+    statusEl.textContent = 'Tự động lưu...';
+
 
     const saveReview = debounce(async () => {
         statusEl.textContent = 'Đang lưu...';
@@ -229,11 +242,14 @@ export async function openReviewModal() {
 
         const reviewData = {
             week_identifier,
-            good: modalElement.querySelector('#review-good').value,
-            improve: modalElement.querySelector('#review-improve').value,
-            grateful: modalElement.querySelector('#review-grateful').value,
+            good: goodEl.value,
+            improve: improveEl.value,
+            grateful: gratefulEl.value,
         };
-        const { error: upsertError } = await state.supabase.from('weekly_reviews').upsert(reviewData);
+        
+        const { error: upsertError } = await state.supabase
+            .from('weekly_reviews')
+            .upsert(reviewData, { onConflict: 'week_identifier' });
 
         if (upsertError) {
             console.error("Error saving review:", upsertError);
@@ -246,8 +262,9 @@ export async function openReviewModal() {
         }
     }, 1000);
 
-    modalElement.querySelector('#review-good').addEventListener('input', saveReview);
-    modalElement.querySelector('#review-improve').addEventListener('input', saveReview);
-    modalElement.querySelector('#review-grateful').addEventListener('input', saveReview);
+    goodEl.addEventListener('input', saveReview);
+    improveEl.addEventListener('input', saveReview);
+    gratefulEl.addEventListener('input', saveReview);
 }
+
 
