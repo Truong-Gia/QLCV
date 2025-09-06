@@ -74,69 +74,61 @@ export function openProfileModal() {
  * @param {string} dueDate - The default due date for the task (YYYY-MM-DD).
  */
 export function openAddTaskModal(dueDate) {
-    const { userProfile, teamMembers, categories } = getState();
-    const allUsers = [userProfile, ...teamMembers];
-    const body = `
-        <div class="space-y-4">
-            <div>
-                <label for="task-content-input" class="block text-sm font-medium text-gray-700">Tên công việc</label>
-                <input type="text" id="task-content-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="VD: Hoàn thành báo cáo...">
-            </div>
-            <div>
-                <label for="task-assign-to" class="block text-sm font-medium text-gray-700">Giao cho</label>
-                <select id="task-assign-to" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    <option value="">-- Chọn thành viên --</option>
-                    ${allUsers.map(u => `<option value="${u.email}">${u.name}</option>`).join('')}
-                </select>
-            </div>
-            <div>
-                <label for="task-priority-select" class="block text-sm font-medium text-gray-700">Mức độ ưu tiên</label>
-                <select id="task-priority-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    ${Object.keys(PRIORITIES).map(p => `<option value="${p}">${p}</option>`).join('')}
-                </select>
-            </div>
-            <div>
-                <label for="task-category-select" class="block text-sm font-medium text-gray-700">Danh mục</label>
-                <select id="task-category-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
-            </div>
-        </div>`;
-    const footer = `
-        <button class="cancel-btn px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50">Hủy</button>
-        <button class="save-task-btn px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Lưu công việc</button>
-    `;
-    const modalElement = showModal('Thêm công việc mới', body, footer);
-    const closeModal = setupModalEvents(modalElement);
+            const allUsers = [userProfile, ...teamMembers];
+            const body = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="task-content-input" class="block text-sm font-medium text-gray-700">Tên công việc</label>
+                        <input type="text" id="task-content-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="VD: Hoàn thành báo cáo...">
+                    </div>
+                    <div>
+                        <label for="task-assign-to" class="block text-sm font-medium text-gray-700">Giao cho</label>
+                        <select id="task-assign-to" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            <option value="">-- Chọn thành viên --</option>
+                            ${allUsers.map(u => `<option value="${u.email}">${u.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="task-priority-select" class="block text-sm font-medium text-gray-700">Mức độ ưu tiên</label>
+                        <select id="task-priority-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            ${Object.keys(PRIORITIES).map(p => `<option value="${p}">${p}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="task-category-select" class="block text-sm font-medium text-gray-700">Danh mục</label>
+                        <select id="task-category-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>`;
+            const footer = `
+                <button class="cancel-btn px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50">Hủy</button>
+                <button class="save-task-btn px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Lưu công việc</button>
+            `;
+            const modalElement = showModal('Thêm công việc mới', body, footer);
+            const closeModal = setupModalEvents(modalElement);
 
-    modalElement.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    modalElement.querySelector('.save-task-btn').addEventListener('click', async (e) => {
-        const content = modalElement.querySelector('#task-content-input').value.trim();
-        if (!content) {
-            showToast('Vui lòng nhập tên công việc.', 'error');
-            return;
-        }
+            modalElement.querySelector('.cancel-btn').addEventListener('click', closeModal);
+            modalElement.querySelector('.save-task-btn').addEventListener('click', async () => {
+                const content = modalElement.querySelector('#task-content-input').value.trim();
+                if (!content) { alert('Vui lòng nhập tên công việc.'); return; }
 
-        const assignedToEmail = modalElement.querySelector('#task-assign-to').value;
-        const assignedToUser = allUsers.find(u => u.email === assignedToEmail);
+                const assignedToEmail = modalElement.querySelector('#task-assign-to').value;
+                const assignedToUser = allUsers.find(u => u.email === assignedToEmail);
 
-        const taskData = {
-            content,
-            due_date: dueDate,
-            priority: modalElement.querySelector('#task-priority-select').value,
-            category: modalElement.querySelector('#task-category-select').value,
-            status: 'Cần làm',
-            is_completed: false,
-            assigned_to_email: assignedToUser?.email || null,
-            assigned_to_name: assignedToUser?.name || null,
-        };
+                const taskData = {
+                    content: content, due_date: dueDate,
+                    priority: modalElement.querySelector('#task-priority-select').value,
+                    category: modalElement.querySelector('#task-category-select').value,
+                    status: 'Cần làm', is_completed: false,
+                    assigned_to_email: assignedToUser ? assignedToUser.email : null,
+                    assigned_to_name: assignedToUser ? assignedToUser.name : null,
+                };
 
-        const saveBtn = e.target;
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Đang lưu...';
+                const saveBtn = modalElement.querySelector('.save-task-btn');
+                saveBtn.disabled = true; saveBtn.textContent = 'Đang lưu...';
+                const { error } = await supabaseClient.from('tasks').insert([taskData]);
 
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('tasks').insert([taskData]);
 
         if (error) {
             showToast('Lỗi: ' + error.message, 'error');
@@ -280,4 +272,5 @@ export async function openReviewModal() {
     modalElement.querySelector('#review-improve').addEventListener('input', saveReview);
     modalElement.querySelector('#review-grateful').addEventListener('input', saveReview);
 }
+
 
