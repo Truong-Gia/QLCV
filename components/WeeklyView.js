@@ -149,7 +149,7 @@ function setupWeeklyViewEventListeners() {
         const taskTarget = event.target.closest('.add-task-btn');
         if (taskTarget) { openAddTaskModal(taskTarget.dataset.date); }
     });
-    
+
     const debouncedSaveNote = (func, timeout = 500) => {
         let timer;
         return (...args) => {
@@ -234,4 +234,3 @@ export async function renderWeeklyView() {
     updateWeeklyProgress(tasks);
     setupWeeklyViewEventListeners();
 }
-

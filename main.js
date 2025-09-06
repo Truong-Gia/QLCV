@@ -8,29 +8,15 @@ import { openProfileModal } from './components/Modals.js';
 import { showLoading, hideLoading, updateProfileUI, showSupabaseModal } from './utils/uiUtils.js';
 
 // --- DOM Elements ---
-        const appContainer = document.getElementById('app-container');
-        const modalsContainer = document.getElementById('modals-container');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const quoteDisplay = document.getElementById('quote-display');
-        const weeklyViewContainer = document.getElementById('weekly-view-container');
-        const monthlyViewContainer = document.getElementById('monthly-view-container');
-        const dashboardViewContainer = document.getElementById('dashboard-view-container');
-        const kanbanViewContainer = document.getElementById('kanban-view-container');
-        const filtersContainer = document.getElementById('filters-container');
-        const toggleWeekBtn = document.getElementById('toggle-week-view');
-        const toggleMonthBtn = document.getElementById('toggle-month-view');
-        const toggleDashboardBtn = document.getElementById('toggle-dashboard-view');
-        const toggleKanbanBtn = document.getElementById('toggle-kanban-view');
+const appContainer = document.getElementById('app-container');
+const quoteDisplay = document.getElementById('quote-display');
+const toggleButtons = {
+    week: document.getElementById('toggle-week-view'),
+    month: document.getElementById('toggle-month-view'),
+    dashboard: document.getElementById('toggle-dashboard-view'),
+    kanban: document.getElementById('toggle-kanban-view')
 };
-
-// --- Constants ---
-        const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới.", "Cách tốt nhất để dự đoán tương lai là tạo ra nó.", "Có công mài sắc, có ngày nên kim."];
-        const PRIORITIES = { 'Cao': 'bg-red-100 text-red-800', 'Trung bình': 'bg-yellow-100 text-yellow-800', 'Thấp': 'bg-blue-100 text-blue-800' };
-        let CATEGORIES = ['Chung', 'Công việc', 'Cá nhân', 'Học tập', 'Dự án'];
-        const STATUSES = ['Cần làm', 'Đang làm', 'Hoàn thành', 'Tạm dừng'];
-        const STATUS_COLORS = { 'Cần làm': '#fca5a5', 'Đang làm': '#fdba74', 'Hoàn thành': '#86efac', 'Tạm dừng': '#d1d5db' };
-        const PRIORITY_COLORS = { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' };
-        const CATEGORY_COLORS = ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'];
+const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
 
 // --- Core Functions ---
 async function renderCurrentView() {
@@ -99,6 +85,3 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
-
-
-
