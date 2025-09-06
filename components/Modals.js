@@ -58,13 +58,12 @@ export function openProfileModal() {
                 return null;
             }).filter(Boolean);
 
-        // Update state and localStorage
         setState({ userProfile: newProfile, teamMembers: newTeam });
         localStorage.setItem('userProfile', JSON.stringify(newProfile));
         localStorage.setItem('teamMembers', JSON.stringify(newTeam));
 
         window.updateProfileUI();
-        window.renderCurrentView(); // Re-render to update filters etc.
+        window.renderCurrentView();
         showToast('Cập nhật hồ sơ thành công!', 'success');
         closeModal();
     });
@@ -113,33 +112,35 @@ export function openAddTaskModal(dueDate) {
     modalElement.querySelector('.cancel-btn').addEventListener('click', closeModal);
     modalElement.querySelector('.save-task-btn').addEventListener('click', async (e) => {
         const content = modalElement.querySelector('#task-content-input').value.trim();
-        if (!content) { 
+        if (!content) {
             showToast('Vui lòng nhập tên công việc.', 'error');
-            return; 
+            return;
         }
 
         const assignedToEmail = modalElement.querySelector('#task-assign-to').value;
         const assignedToUser = allUsers.find(u => u.email === assignedToEmail);
 
         const taskData = {
-            content: content, due_date: dueDate,
+            content,
+            due_date: dueDate,
             priority: modalElement.querySelector('#task-priority-select').value,
             category: modalElement.querySelector('#task-category-select').value,
-            status: 'Cần làm', is_completed: false,
-            assigned_to_email: assignedToUser ? assignedToUser.email : null,
-            assigned_to_name: assignedToUser ? assignedToUser.name : null,
+            status: 'Cần làm',
+            is_completed: false,
+            assigned_to_email: assignedToUser?.email || null,
+            assigned_to_name: assignedToUser?.name || null,
         };
 
         const saveBtn = e.target;
-        saveBtn.disabled = true; 
+        saveBtn.disabled = true;
         saveBtn.textContent = 'Đang lưu...';
 
         const supabase = getSupabaseClient();
         const { error } = await supabase.from('tasks').insert([taskData]);
-        
+
         if (error) {
             showToast('Lỗi: ' + error.message, 'error');
-            saveBtn.disabled = false; 
+            saveBtn.disabled = false;
             saveBtn.textContent = 'Lưu công việc';
         } else {
             showToast('Thêm công việc thành công!', 'success');
@@ -148,3 +149,135 @@ export function openAddTaskModal(dueDate) {
         }
     });
 }
+
+
+/**
+ * Opens the modal for managing habits.
+ */
+export async function openHabitsModal() {
+    const supabase = getSupabaseClient();
+    const { data: habits, error } = await supabase.from('habits').select('*').order('created_at');
+    if (error) {
+        showToast("Lỗi tải thói quen: " + error.message, 'error');
+        return;
+    }
+
+    const renderHabitList = (habits) => habits.map(h => `
+        <li class="flex items-center justify-between p-2 hover:bg-gray-50">
+            <span class="${!h.is_active ? 'text-gray-400 line-through' : ''}">${h.name}</span>
+            <div class="flex items-center gap-2">
+                 <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer toggle-habit-active" data-habit-id="${h.id}" ${h.is_active ? 'checked' : ''}>
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+                <button class="delete-habit-btn p-1 text-gray-400 hover:text-red-600" data-habit-id="${h.id}">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+        </li>
+    `).join('');
+
+    const body = `
+        <ul id="modal-habit-list" class="space-y-1">${renderHabitList(habits)}</ul>
+        <div class="mt-4 pt-4 border-t">
+            <div class="flex gap-2">
+                <input type="text" id="new-habit-name" class="flex-grow border border-gray-300 rounded-md shadow-sm p-2" placeholder="Tên thói quen mới...">
+                <button id="add-habit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700">Thêm</button>
+            </div>
+        </div>`;
+    
+    const modalElement = showModal('Quản lý Thói quen', body, '');
+    const closeModal = setupModalEvents(modalElement);
+
+    modalElement.addEventListener('click', async (e) => {
+        const target = e.target;
+        if (target.closest('.toggle-habit-active')) {
+            const habitId = target.closest('.toggle-habit-active').dataset.habitId;
+            const is_active = target.closest('.toggle-habit-active').checked;
+            await supabase.from('habits').update({ is_active }).eq('id', habitId);
+            await window.renderCurrentView();
+        }
+        if (target.closest('.delete-habit-btn')) {
+            const habitId = target.closest('.delete-habit-btn').dataset.habitId;
+            if(confirm('Bạn có chắc muốn xóa thói quen này? Hành động này không thể hoàn tác.')) {
+                await supabase.from('habits').delete().eq('id', habitId);
+                closeModal();
+                await window.renderCurrentView();
+            }
+        }
+        if (target.closest('#add-habit-btn')) {
+            const input = modalElement.querySelector('#new-habit-name');
+            const name = input.value.trim();
+            if(name) {
+                await supabase.from('habits').insert({ name, is_active: true });
+                closeModal();
+                await window.renderCurrentView();
+            }
+        }
+    });
+}
+
+/**
+ * Opens the modal for the weekly review.
+ */
+export async function openReviewModal() {
+    const { currentDate } = getState();
+    const supabase = getSupabaseClient();
+    const weekDays = getWeekDays(currentDate);
+    const year = weekDays[0].getFullYear();
+    const weekNumber = Math.ceil((((weekDays[0] - new Date(year, 0, 1)) / 86400000) + 1) / 7);
+    const week_identifier = `${year}-W${weekNumber}`;
+    
+    const { data, error } = await supabase.from('weekly_reviews').select('*').eq('week_identifier', week_identifier).single();
+    if(error && error.code !== 'PGRST116') { // Ignore 'range not found' error
+        showToast("Lỗi tải tổng kết tuần: " + error.message, 'error');
+    }
+    
+    const body = `
+        <div class="space-y-4 text-sm">
+            <div>
+                <label class="font-semibold text-gray-700">Điều tôi đã làm tốt trong tuần này:</label>
+                <textarea id="review-good" class="mt-1 w-full border rounded p-2 h-24">${data?.good || ''}</textarea>
+            </div>
+             <div>
+                <label class="font-semibold text-gray-700">Điều tôi có thể cải thiện:</label>
+                <textarea id="review-improve" class="mt-1 w-full border rounded p-2 h-24">${data?.improve || ''}</textarea>
+            </div>
+             <div>
+                <label class="font-semibold text-gray-700">Điều tôi biết ơn:</label>
+                <textarea id="review-grateful" class="mt-1 w-full border rounded p-2 h-24">${data?.grateful || ''}</textarea>
+            </div>
+        </div>
+    `;
+    const footer = `<div id="review-save-status" class="text-sm text-gray-500 italic"></div>`;
+    const modalElement = showModal(`Tổng kết Tuần (${week_identifier})`, body, footer);
+    setupModalEvents(modalElement);
+    
+    const statusEl = modalElement.querySelector('#review-save-status');
+
+    const saveReview = debounce(async () => {
+        statusEl.textContent = 'Đang lưu...';
+        statusEl.classList.remove('text-green-600', 'text-red-500');
+
+        const reviewData = {
+            week_identifier,
+            good: modalElement.querySelector('#review-good').value,
+            improve: modalElement.querySelector('#review-improve').value,
+            grateful: modalElement.querySelector('#review-grateful').value,
+        };
+        const { error: upsertError } = await supabase.from('weekly_reviews').upsert(reviewData);
+
+        if (upsertError) {
+            statusEl.textContent = 'Lỗi! Không thể lưu.';
+            statusEl.classList.add('text-red-500');
+        } else {
+            statusEl.textContent = 'Đã lưu ✓';
+            statusEl.classList.add('text-green-600');
+        }
+    }, 1000);
+
+    modalElement.querySelector('#review-good').addEventListener('input', saveReview);
+    modalElement.querySelector('#review-improve').addEventListener('input', saveReview);
+    modalElement.querySelector('#review-grateful').addEventListener('input', saveReview);
+}
+
