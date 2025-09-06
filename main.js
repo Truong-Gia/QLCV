@@ -16,7 +16,13 @@ const toggleButtons = {
     dashboard: document.getElementById('toggle-dashboard-view'),
     kanban: document.getElementById('toggle-kanban-view')
 };
-const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
+const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới.", "Cách tốt nhất để dự đoán tương lai là tạo ra nó.", "Có công mài sắt, có ngày nên kim."];
+const PRIORITIES = { 'Cao': 'bg-red-100 text-red-800', 'Trung bình': 'bg-yellow-100 text-yellow-800', 'Thấp': 'bg-blue-100 text-blue-800' };
+let CATEGORIES = ['Chung', 'Công việc', 'Cá nhân', 'Học tập', 'Dự án'];
+const STATUSES = ['Cần làm', 'Đang làm', 'Hoàn thành', 'Tạm dừng'];
+const STATUS_COLORS = { 'Cần làm': '#fca5a5', 'Đang làm': '#fdba74', 'Hoàn thành': '#86efac', 'Tạm dừng': '#d1d5db' };
+const PRIORITY_COLORS = { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' };
+const CATEGORY_COLORS = ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'];
 
 // --- Core Functions ---
 async function renderCurrentView() {
@@ -85,3 +91,4 @@ function loadUserData() {
         showSupabaseModal();
     }
 })();
+
