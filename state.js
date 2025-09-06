@@ -13,3 +13,12 @@ export const state = {
     PRIORITY_COLORS: { 'Cao': '#ef4444', 'Trung bình': '#f59e0b', 'Thấp': '#3b82f6' },
     CATEGORY_COLORS: ['#6366f1', '#38bdf8', '#34d399', '#facc15', '#a855f7', '#ec4899'],
 };
+// Hàm để lấy state, tránh việc thay đổi trực tiếp
+export function getState() {
+    return { ...state };
+}
+
+// Hàm duy nhất để cập nhật state
+export function setState(newState) {
+    Object.assign(state, newState);
+}
