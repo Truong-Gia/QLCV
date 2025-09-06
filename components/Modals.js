@@ -1,21 +1,29 @@
-import { state } from '../state.js';
-import { showModal, setupModalEvents } from '../utils/uiUtils.js';
+import { getState, setState } from '../state.js';
+import { getSupabaseClient } from '../services/supabaseService.js';
+import { showModal, setupModalEvents, debounce, showToast } from '../utils/uiUtils.js';
+import { getWeekDays } from '../utils/dateUtils.js';
 
+const PRIORITIES = { 'Cao': 'bg-red-100 text-red-800', 'Trung bình': 'bg-yellow-100 text-yellow-800', 'Thấp': 'bg-blue-100 text-blue-800' };
+
+/**
+ * Opens the modal for editing user profile and managing team members.
+ */
 export function openProfileModal() {
+    const { userProfile, teamMembers } = getState();
     const body = `
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700">Tên của bạn</label>
-                <input id="profile-name-input" type="text" value="${state.userProfile.name}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <input id="profile-name-input" type="text" value="${userProfile.name}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Email của bạn (duy nhất)</label>
-                <input id="profile-email-input" type="email" value="${state.userProfile.email}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <input id="profile-email-input" type="email" value="${userProfile.email}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
             <hr>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Thành viên nhóm (mỗi người một dòng)</label>
-                <textarea id="team-members-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 h-24" placeholder="Nguyễn Văn A, a@example.com\nhoặc chỉ cần email:\nb@example.com">${state.teamMembers.map(m => `${m.name}, ${m.email}`).join('\n')}</textarea>
+                <textarea id="team-members-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 h-24" placeholder="Nguyễn Văn A, a@example.com\nhoặc chỉ cần email:\nb@example.com">${teamMembers.map(m => `${m.name}, ${m.email}`).join('\n')}</textarea>
                 <p class="text-xs text-gray-500 mt-1">Định dạng: "Tên, email" hoặc chỉ "email". Email là duy nhất.</p>
             </div>
         </div>`;
@@ -28,41 +36,47 @@ export function openProfileModal() {
         const name = modalElement.querySelector('#profile-name-input').value.trim();
         const email = modalElement.querySelector('#profile-email-input').value.trim();
         if (!name || !email) {
-            alert('Tên và Email của bạn không được để trống.');
+            showToast('Tên và Email của bạn không được để trống.', 'error');
             return;
         }
-        state.userProfile = { name, email };
+        const newProfile = { name, email };
 
         const teamText = modalElement.querySelector('#team-members-input').value.trim();
-        state.teamMembers = teamText.split('\n')
-            .map(line => line.trim())
-            .filter(line => line)
+        const newTeam = teamText.split('\n')
+            .map(line => line.trim()).filter(line => line)
             .map(line => {
                 const parts = line.split(',');
                 if (parts.length >= 2) {
                     const email = parts.pop().trim();
                     const name = parts.join(',').trim();
-                    if (name && email.includes('@')) {
-                        return { name: name, email: email };
-                    }
+                    if (name && email.includes('@')) return { name, email };
                 } else if (line.includes('@')) {
                     const email = line.trim();
                     const name = email.split('@')[0];
-                    return { name: name, email: email };
+                    return { name, email };
                 }
                 return null;
             }).filter(Boolean);
-        
-        localStorage.setItem('userProfile', JSON.stringify(state.userProfile));
-        localStorage.setItem('teamMembers', JSON.stringify(state.teamMembers));
 
-        window.renderCurrentView();
+        // Update state and localStorage
+        setState({ userProfile: newProfile, teamMembers: newTeam });
+        localStorage.setItem('userProfile', JSON.stringify(newProfile));
+        localStorage.setItem('teamMembers', JSON.stringify(newTeam));
+
+        window.updateProfileUI();
+        window.renderCurrentView(); // Re-render to update filters etc.
+        showToast('Cập nhật hồ sơ thành công!', 'success');
         closeModal();
     });
 }
 
+/**
+ * Opens the modal to add a new task.
+ * @param {string} dueDate - The default due date for the task (YYYY-MM-DD).
+ */
 export function openAddTaskModal(dueDate) {
-    const allUsers = [state.userProfile, ...state.teamMembers];
+    const { userProfile, teamMembers, categories } = getState();
+    const allUsers = [userProfile, ...teamMembers];
     const body = `
         <div class="space-y-4">
             <div>
@@ -79,13 +93,13 @@ export function openAddTaskModal(dueDate) {
             <div>
                 <label for="task-priority-select" class="block text-sm font-medium text-gray-700">Mức độ ưu tiên</label>
                 <select id="task-priority-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    ${Object.keys(state.PRIORITIES).map(p => `<option value="${p}">${p}</option>`).join('')}
+                    ${Object.keys(PRIORITIES).map(p => `<option value="${p}">${p}</option>`).join('')}
                 </select>
             </div>
             <div>
                 <label for="task-category-select" class="block text-sm font-medium text-gray-700">Danh mục</label>
                 <select id="task-category-select" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    ${state.CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
                 </select>
             </div>
         </div>`;
@@ -97,9 +111,12 @@ export function openAddTaskModal(dueDate) {
     const closeModal = setupModalEvents(modalElement);
 
     modalElement.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    modalElement.querySelector('.save-task-btn').addEventListener('click', async () => {
+    modalElement.querySelector('.save-task-btn').addEventListener('click', async (e) => {
         const content = modalElement.querySelector('#task-content-input').value.trim();
-        if (!content) { alert('Vui lòng nhập tên công việc.'); return; }
+        if (!content) { 
+            showToast('Vui lòng nhập tên công việc.', 'error');
+            return; 
+        }
 
         const assignedToEmail = modalElement.querySelector('#task-assign-to').value;
         const assignedToUser = allUsers.find(u => u.email === assignedToEmail);
@@ -113,81 +130,21 @@ export function openAddTaskModal(dueDate) {
             assigned_to_name: assignedToUser ? assignedToUser.name : null,
         };
 
-        const saveBtn = modalElement.querySelector('.save-task-btn');
-        saveBtn.disabled = true; saveBtn.textContent = 'Đang lưu...';
-        const { error } = await state.supabase.from('tasks').insert([taskData]);
+        const saveBtn = e.target;
+        saveBtn.disabled = true; 
+        saveBtn.textContent = 'Đang lưu...';
+
+        const supabase = getSupabaseClient();
+        const { error } = await supabase.from('tasks').insert([taskData]);
         
         if (error) {
-            alert('Lỗi: ' + error.message);
-            saveBtn.disabled = false; saveBtn.textContent = 'Lưu công việc';
+            showToast('Lỗi: ' + error.message, 'error');
+            saveBtn.disabled = false; 
+            saveBtn.textContent = 'Lưu công việc';
         } else {
+            showToast('Thêm công việc thành công!', 'success');
             closeModal();
-            await window.renderCurrentView();
+            window.renderCurrentView();
         }
     });
 }
-
-export async function openHabitsModal() {
-    const { data: habits, error } = await state.supabase.from('habits').select('*').order('created_at');
-    if (error) { alert("Lỗi tải thói quen: " + error.message); return; }
-
-    const renderHabitList = (habits) => habits.map(h => `
-        <li class="flex items-center justify-between p-2 hover:bg-gray-50">
-            <span class="${!h.is_active ? 'text-gray-400' : ''}">${h.name}</span>
-            <div class="flex items-center gap-2">
-                 <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" class="sr-only peer toggle-habit-active" data-habit-id="${h.id}" ${h.is_active ? 'checked' : ''}>
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-                <button class="delete-habit-btn p-1 text-gray-400 hover:text-red-600" data-habit-id="${h.id}">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
-                </button>
-            </div>
-        </li>
-    `).join('');
-
-    const body = `
-        <ul id="modal-habit-list" class="space-y-1">${renderHabitList(habits)}</ul>
-        <div class="mt-4 pt-4 border-t">
-            <div class="flex gap-2">
-                <input type="text" id="new-habit-name" class="flex-grow border border-gray-300 rounded-md shadow-sm p-2" placeholder="Tên thói quen mới...">
-                <button id="add-habit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700">Thêm</button>
-            </div>
-        </div>`;
-    
-    const modalElement = showModal('Quản lý Thói quen', body, '');
-    const closeModal = setupModalEvents(modalElement);
-
-    modalElement.addEventListener('click', async (e) => {
-        const target = e.target;
-        if (target.closest('.toggle-habit-active')) {
-            const habitId = target.closest('.toggle-habit-active').dataset.habitId;
-            const is_active = target.closest('.toggle-habit-active').checked;
-            await state.supabase.from('habits').update({ is_active }).match({ id: habitId });
-            await window.renderCurrentView();
-        }
-        if (target.closest('.delete-habit-btn')) {
-            const habitId = target.closest('.delete-habit-btn').dataset.habitId;
-            if(confirm('Bạn có chắc muốn xóa thói quen này?')) {
-                await state.supabase.from('habits').delete().match({ id: habitId });
-                closeModal();
-                await window.renderCurrentView();
-            }
-        }
-        if (target.closest('#add-habit-btn')) {
-            const input = modalElement.querySelector('#new-habit-name');
-            const name = input.value.trim();
-            if(name) {
-                await state.supabase.from('habits').insert({ name, is_active: true });
-                closeModal();
-                await window.renderCurrentView();
-            }
-        }
-    });
-}
-
-export async function openReviewModal() {
-    
-        }
-
-
