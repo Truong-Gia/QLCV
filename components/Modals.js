@@ -257,7 +257,9 @@ export async function openReviewModal() {
             improve: modalElement.querySelector('#review-improve').value,
             grateful: modalElement.querySelector('#review-grateful').value,
         };
-        const { error: upsertError } = await supabase.from('weekly_reviews').upsert(reviewData);
+        const { error: upsertError } = await supabaseClient.from('weekly_reviews').upsert(reviewData, {
+    onConflict: 'week_identifier', // Thêm dòng này
+});
 
         if (upsertError) {
             statusEl.textContent = 'Lỗi! Không thể lưu.';
@@ -272,5 +274,6 @@ export async function openReviewModal() {
     modalElement.querySelector('#review-improve').addEventListener('input', saveReview);
     modalElement.querySelector('#review-grateful').addEventListener('input', saveReview);
 }
+
 
 
