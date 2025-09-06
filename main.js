@@ -17,7 +17,7 @@ const viewButtons = {
     kanban: document.getElementById('toggle-kanban-view'),
 };
 
-const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới.", "Cách tốt nhất để dự đoán tương lai là tạo ra nó.", "Có công mài sắt, có ngày nên kim.", "Một dự án của Trương Hải Lâm.", "Chúc bạn một ngày làm việc đầy năng lượng."];
+const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
 
 // --- Core App Logic ---
 
@@ -32,9 +32,13 @@ async function renderCurrentView() {
         kanban: renderKanbanView,
     };
     
-    // Hide all views first
+    // Hide all view containers safely
+    // SỬA LỖI: Thêm "?." để tránh lỗi khi element không tồn tại.
     Object.keys(viewRenderers).forEach(view => {
-        document.getElementById(`${view}-view-container`).classList.add('hidden');
+        const container = document.getElementById(`${view}-view-container`);
+        if (container) {
+            container.classList.add('hidden');
+        }
     });
 
     if (viewRenderers[currentView]) {
@@ -53,7 +57,7 @@ function switchView(view) {
     setState({ currentView: view });
 
     Object.values(viewButtons).forEach(btn => btn.classList.remove('active'));
-    viewButtons[view].classList.add('active');
+    viewButtons[view]?.classList.add('active');
     
     // Clear charts if switching away from dashboard
     if (view !== 'dashboard') {
@@ -79,8 +83,8 @@ function updateProfileUI() {
     const { userProfile } = getState();
     const nameDisplay = document.getElementById('user-name-display');
     const avatarDisplay = document.getElementById('user-avatar');
-    nameDisplay.textContent = userProfile.name || 'Hồ sơ';
-    avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
+    if (nameDisplay) nameDisplay.textContent = userProfile.name || 'Hồ sơ';
+    if (avatarDisplay) avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
 }
 window.updateProfileUI = updateProfileUI; // Make it global for modals to call
 
@@ -95,7 +99,7 @@ window.updateProfileUI = updateProfileUI; // Make it global for modals to call
         // Setup event listeners
         document.getElementById('profile-btn').addEventListener('click', openProfileModal);
         Object.keys(viewButtons).forEach(key => {
-            viewButtons[key].addEventListener('click', () => switchView(key));
+            viewButtons[key]?.addEventListener('click', () => switchView(key));
         });
         
         appContainer.classList.remove('hidden');
@@ -105,4 +109,3 @@ window.updateProfileUI = updateProfileUI; // Make it global for modals to call
         showSupabaseModal();
     }
 })();
-
