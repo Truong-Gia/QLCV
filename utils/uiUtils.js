@@ -1,25 +1,37 @@
+export const debounce = (func, timeout = 500) => {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+};
+
+export function stringToColor(str) {
+    if (!str) return '#e0e7ff';
+    let hash = 0;
+    str.split('').forEach(char => {
+        hash = char.charCodeAt(0) + ((hash << 5) - hash);
+    });
+    let color = '#';
+    for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xFF;
+        color += ('00' + (value & 0xCF | 0x30).toString(16)).substr(-2);
+    }
+    return color;
+}
+
 export function showLoading() {
-    const loadingSpinner = document.getElementById('loading-spinner');
-    if (!loadingSpinner) return;
-    loadingSpinner.innerHTML = `
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-2 text-gray-600">Đang tải dữ liệu...</p>`;
-    loadingSpinner.classList.remove('hidden');
+    document.getElementById('loading-spinner').classList.remove('hidden');
     ['weekly-view-container', 'monthly-view-container', 'dashboard-view-container', 'kanban-view-container', 'filters-container'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
+        document.getElementById(id)?.classList.add('hidden');
     });
 }
 
 export function hideLoading() {
-    const loadingSpinner = document.getElementById('loading-spinner');
-    if (loadingSpinner) loadingSpinner.classList.add('hidden');
+    document.getElementById('loading-spinner').classList.add('hidden');
 }
 
 export function showModal(title, bodyHTML, footerHTML) {
-    const modalsContainer = document.getElementById('modals-container');
-    if (!modalsContainer) return null;
-
     const modalId = `modal-${Date.now()}`;
     const modalElement = document.createElement('div');
     modalElement.id = modalId;
@@ -28,86 +40,44 @@ export function showModal(title, bodyHTML, footerHTML) {
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all">
             <div class="flex justify-between items-center p-4 border-b">
                 <h3 class="text-lg font-semibold">${title}</h3>
-                <button class="p-1 rounded-full hover:bg-gray-200" data-close-modal="${modalId}">
+                <button class="p-1 rounded-full hover:bg-gray-200" data-close-modal>
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div class="p-6 modal-body max-h-[60vh] overflow-y-auto">${bodyHTML}</div>
-            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">${footerHTML}</div>
+            <div class="p-4 bg-gray-50 border-t flex justify-between items-center">${footerHTML}</div>
         </div>`;
     
-    modalsContainer.appendChild(modalElement);
+    document.getElementById('modals-container').appendChild(modalElement);
     return modalElement;
 }
 
 export function setupModalEvents(modalElement) {
-    if (!modalElement) return () => {};
-    const modalId = modalElement.id;
     const closeModal = () => modalElement.remove();
-    const closeButton = modalElement.querySelector(`[data-close-modal="${modalId}"]`);
-    if (closeButton) {
-        closeButton.addEventListener('click', closeModal);
-    }
+    modalElement.querySelector('[data-close-modal]').addEventListener('click', closeModal);
+    modalElement.addEventListener('click', (e) => {
+        if (e.target === modalElement) {
+            closeModal();
+        }
+    });
     return closeModal;
 }
 
-export function updateProfileUI(userProfile) {
-    const nameDisplay = document.getElementById('user-name-display');
-    const avatarDisplay = document.getElementById('user-avatar');
-    if (nameDisplay) nameDisplay.textContent = userProfile.name || 'Hồ sơ';
-    if (avatarDisplay) {
-        avatarDisplay.textContent = userProfile.name ? userProfile.name.charAt(0).toUpperCase() : '?';
-        avatarDisplay.style.backgroundColor = stringToColor(userProfile.email || '');
-    }
-}
-
-export function showSupabaseModal() {
-    const body = `
-        <p class="text-sm text-gray-600 mb-4">Vui lòng nhập thông tin kết nối Supabase của bạn.</p>
-        <div>
-            <label for="supabase-url" class="block text-sm font-medium text-gray-700">Project URL</label>
-            <input type="text" id="supabase-url" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-        </div>
-        <div class="mt-4">
-            <label for="supabase-key" class="block text-sm font-medium text-gray-700">Anon (public) Key</label>
-            <input type="text" id="supabase-key" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-        </div>
-    `;
-    const footer = `<button id="save-supabase-config" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Lưu và Bắt đầu</button>`;
-    const modalElement = showModal('Cấu hình Supabase', body, footer);
-    const closeModal = setupModalEvents(modalElement);
+export function showToast(message, type = 'success') {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+    };
+    const toastContainer = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `text-white px-4 py-2 rounded-md shadow-lg transition-opacity duration-300 ${colors[type]}`;
+    toast.textContent = message;
     
-    const saveButton = modalElement.querySelector('#save-supabase-config');
-    if (saveButton) {
-        saveButton.addEventListener('click', () => {
-            const urlInput = modalElement.querySelector('#supabase-url');
-            const keyInput = modalElement.querySelector('#supabase-key');
-            if (urlInput && keyInput) {
-                const url = urlInput.value.trim();
-                const key = keyInput.value.trim();
-                if (url && key) {
-                    localStorage.setItem('supabaseUrl', url);
-                    localStorage.setItem('supabaseKey', key);
-                    closeModal();
-                    location.reload();
-                } else {
-                    alert("Vui lòng nhập đầy đủ URL và Key.");
-                }
-            }
-        });
-    }
-}
-
-export function stringToColor(str) {
-    if (!str) return '#e0e7ff';
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    let color = '#';
-    for (let i = 0; i < 3; i++) {
-        let value = (hash >> (i * 8)) & 0xFF;
-        color += ('00' + (value & 0xCF | 0x30)).toString(16).substr(-2);
-    }
-    return color;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('opacity-0');
+        toast.addEventListener('transitionend', () => toast.remove());
+    }, 3000);
 }
