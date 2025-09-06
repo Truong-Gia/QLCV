@@ -17,7 +17,7 @@ const viewButtons = {
     kanban: document.getElementById('toggle-kanban-view'),
 };
 
-const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới."];
+const quotes = ["Bí mật của sự tiến bộ là bắt đầu.", "Hãy là sự thay đổi mà bạn muốn thấy trên thế giới.", "Cách tốt nhất để dự đoán tương lai là tạo ra nó.", "Có công mài sắt, có ngày nên kim.", "Một dự án của Trương Hải Lâm.", "Chúc bạn một ngày làm việc đầy năng lượng."];
 
 // --- Core App Logic ---
 
@@ -105,3 +105,4 @@ window.updateProfileUI = updateProfileUI; // Make it global for modals to call
         showSupabaseModal();
     }
 })();
+
