@@ -1,59 +1,46 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-import { showModal, setupModalEvents } from '../utils/uiUtils.js';
+import { state } from '../state.js';
 
-let supabaseClient;
+export const supabaseService = {
+    async initialize(url, key) {
+        const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm");
+        state.supabaseClient = createClient(url, key);
+        return state.supabaseClient;
+    },
 
-export function initializeSupabase() {
-    const savedUrl = localStorage.getItem('supabaseUrl');
-    const savedKey = localStorage.getItem('supabaseKey');
+    async testConnection() {
+        return await state.supabaseClient.from('tasks').select('id').limit(1);
+    },
 
-    if (savedUrl && savedKey) {
-        try {
-            supabaseClient = createClient(savedUrl, savedKey);
-            return supabaseClient;
-        } catch (e) {
-            console.error('Lỗi khởi tạo Supabase:', e);
-            localStorage.clear();
-            return null;
-        }
-    }
-    return null;
-}
+    async getAllTasks() {
+        return await state.supabaseClient.from('tasks').select('*');
+    },
 
-export function getSupabaseClient() {
-    if (!supabaseClient) {
-        console.error("Supabase client chưa được khởi tạo!");
-    }
-    return supabaseClient;
-}
+    async addTask(taskData) {
+        return await state.supabaseClient.from('tasks').insert([taskData]).select().single();
+    },
 
-export function showSupabaseModal() {
-    const body = `
-        <p class="text-sm text-gray-600 mb-4">Vui lòng nhập thông tin kết nối Supabase của bạn.</p>
-        <div>
-            <label for="supabase-url" class="block text-sm font-medium text-gray-700">Project URL</label>
-            <input type="text" id="supabase-url" class="mt-1 block w-full border rounded-md p-2">
-        </div>
-        <div class="mt-4">
-            <label for="supabase-key" class="block text-sm font-medium text-gray-700">Anon (public) Key</label>
-            <input type="text" id="supabase-key" class="mt-1 block w-full border rounded-md p-2">
-        </div>
-    `;
-    const footer = `<button id="save-supabase-config" class="px-4 py-2 bg-indigo-600 text-white rounded-md">Lưu và Bắt đầu</button>`;
-    const modalElement = showModal('Cấu hình Supabase', body, footer);
-    const closeModal = setupModalEvents(modalElement);
+    async updateTask(taskId, updatedData) {
+        return await state.supabaseClient.from('tasks').update(updatedData).match({ id: taskId }).select().single();
+    },
+
+    async deleteTask(taskId) {
+        return await state.supabaseClient.from('tasks').delete().match({ id: taskId });
+    },
     
-    modalElement.querySelector('#save-supabase-config').addEventListener('click', () => {
-        const url = modalElement.querySelector('#supabase-url').value.trim();
-        const key = modalElement.querySelector('#supabase-key').value.trim();
-        if (url && key) {
-            localStorage.setItem('supabaseUrl', url);
-            localStorage.setItem('supabaseKey', key);
-            closeModal();
-            location.reload();
-        } else {
-            alert("Vui lòng nhập đầy đủ URL và Key.");
-        }
-    });
-}
+    async deleteAllData() {
+        return await state.supabaseClient.rpc('truncate_all_data');
+    },
 
+    subscribeToChanges(callback) {
+        return state.supabaseClient
+            .channel('public-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public' }, callback)
+            .subscribe((status, err) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Successfully subscribed to real-time updates!');
+                } else {
+                    console.error('Real-time subscription failed.', err);
+                }
+            });
+    }
+};
