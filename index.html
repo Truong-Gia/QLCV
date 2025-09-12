@@ -3,53 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QLCV 4.0</title>
+    <title>Quản lý công việc 4.0 - Cải tiến</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="text-gray-800">
 
     <div id="modals-container"></div>
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
-    <div id="app-container" class="hidden">
-        <div class="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
-            <header class="flex justify-between items-center mb-6">
-                <div class="flex-1"></div>
-                <div class="flex-1 text-center">
-                    <h1 class="text-4xl font-bold text-gray-800">Quản lý công việc 4.0</h1>
-                    <p id="quote-display" class="mt-2 text-lg text-gray-500 italic"></p>
-                </div>
-                <div class="flex-1 flex justify-end">
-                    <button id="profile-btn" class="flex items-center gap-2 py-2 px-4 bg-white rounded-lg shadow-sm hover:bg-gray-100">
-                        <span id="user-avatar" class="avatar">?</span>
-                        <span id="user-name-display" class="font-semibold text-sm">Hồ sơ</span>
-                    </button>
-                </div>
-            </header>
-            
-            <div class="mb-6 flex justify-center">
-                <div class="inline-flex rounded-md shadow-sm" role="group">
-                    <button type="button" id="toggle-week-view" class="view-toggle-btn active py-2 px-4 text-sm font-medium text-gray-900 bg-white rounded-l-lg border border-gray-200 hover:bg-gray-100 focus:z-10">Lịch Tuần</button>
-                    <button type="button" id="toggle-month-view" class="view-toggle-btn py-2 px-4 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 focus:z-10">Lịch Tháng</button>
-                    <button type="button" id="toggle-dashboard-view" class="view-toggle-btn py-2 px-4 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 focus:z-10">Dashboard</button>
-                    <button type="button" id="toggle-kanban-view" class="view-toggle-btn py-2 px-4 text-sm font-medium text-gray-900 bg-white rounded-r-md border border-gray-200 hover:bg-gray-100 focus:z-10">Kanban</button>
-                </div>
+    <div id="app-container" class="hidden flex h-screen">
+        <aside id="sidebar" class="w-64 bg-white/80 glass-effect p-4 flex flex-col flex-shrink-0 fixed inset-y-0 left-0 z-40 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0">
+            <h1 class="text-2xl font-bold text-indigo-600 mb-8">Quản lý công việc 4.0</h1>
+            <nav id="sidebar-nav" class="flex flex-col space-y-2">
+                <a href="#" data-view="dashboard" class="sidebar-item active flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M4 4h16v4H4z"></path></svg>
+                    <span>Dashboard</span>
+                </a>
+                 <a href="#" data-view="reports" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span>Báo cáo</span>
+                </a>
+                 <a href="#" data-view="week" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Lịch Tuần</span>
+                </a>
+                 <a href="#" data-view="month" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Lịch Tháng</span>
+                </a>
+                 <a href="#" data-view="kanban" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                     <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                    <span>Bảng Kanban</span>
+                </a>
+                 <a href="#" data-view="list" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                     <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                    <span>Danh sách</span>
+                </a>
+                 <a href="#" data-view="members" class="sidebar-item flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-200/50">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span>Nhân sự</span>
+                </a>
+            </nav>
+            <div class="mt-auto">
+                 <button id="profile-btn" class="flex w-full items-center gap-2 py-2 px-4 bg-white/80 rounded-lg shadow-sm hover:bg-gray-100/80 glass-effect">
+                    <span id="user-avatar" class="avatar">?</span>
+                    <span id="user-name-display" class="font-semibold text-sm">Hồ sơ</span>
+                </button>
             </div>
+        </aside>
 
-            <div id="filters-container" class="hidden"></div>
-            <div id="loading-spinner" class="text-center py-10"></div>
+        <div class="flex-1 flex flex-col">
+            <header class="lg:hidden p-4 flex justify-between items-center bg-white/80 glass-effect border-b sticky top-0 z-20">
+                <button id="hamburger-btn" class="p-2 rounded-md hover:bg-gray-200/50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 id="current-view-title" class="text-lg font-bold text-indigo-600">Dashboard</h2>
+                <div class="w-8"></div> </header>
 
-            <div id="weekly-view-container"></div>
-            <div id="monthly-view-container" class="hidden"></div>
-            <div id="dashboard-view-container" class="hidden"></div>
-            <div id="kanban-view-container" class="hidden"></div>
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                <div id="search-and-filter-container" class="hidden mb-6 p-4 rounded-lg shadow-sm flex flex-col gap-4 glass-effect">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="search-input" placeholder="Tìm kiếm công việc..." class="w-full block pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div id="filters-container" class="flex flex-wrap gap-x-6 gap-y-4 items-end">
+                        <div class="flex-shrink-0">
+                            <h3 class="font-semibold text-lg whitespace-nowrap">Bộ lọc:</h3>
+                        </div>
+                        <div class="flex-1 min-w-[180px]">
+                            <label for="priority-filter" class="text-sm font-medium text-gray-700">Ưu tiên</label>
+                            <select id="priority-filter" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"></select>
+                        </div>
+                        <div class="flex-1 min-w-[180px]">
+                            <label for="category-filter" class="text-sm font-medium text-gray-700">Danh mục</label>
+                            <select id="category-filter" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"></select>
+                        </div>
+                        <div class="flex-1 min-w-[180px]">
+                            <label for="person-filter" class="text-sm font-medium text-gray-700">Người phụ trách</label>
+                            <select id="person-filter" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loading-spinner" class="text-center py-10">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Đang tải dữ liệu...</p>
+                </div>
+
+                <div id="weekly-view-container"></div>
+                <div id="monthly-view-container" class="hidden"></div>
+                <div id="dashboard-view-container" class="hidden"></div>
+                <div id="kanban-view-container" class="hidden"></div>
+                <div id="list-view-container" class="hidden"></div>
+                <div id="members-view-container" class="hidden"></div>
+                <div id="reports-view-container" class="hidden"></div>
+
+            </main>
         </div>
     </div>
     
-    <script type="module" src="./main.js"></script>
+    <button id="fab-add-task" class="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 bg-indigo-600 text-white rounded-full p-4 shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-110 z-20">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    </button>
+    
+    <script type="module" src="main.js"></script>
 </body>
 </html>
-
