@@ -1,27 +1,12 @@
-import { state } from '../state.js';
-import { stringToColor, getRandomPastelColor } from '../utils/uiUtils.js';
-import { renderCurrentView } from '../main.js';
+// components/MonthlyView.js
 
-const monthlyViewContainer = document.getElementById('monthly-view-container');
-
-function renderMonthDay(day, month, year) {
-    const today = new Date();
-    let dayClasses = 'month-day p-2 flex flex-col';
-    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-        dayClasses += ' ring-2 ring-indigo-500 z-10';
-    }
-
-    return `
-        <div class="${dayClasses}" data-day="${day}" style="background-color: ${getRandomPastelColor()};">
-            <span class="font-medium ${day === today.getDate() && month === today.getMonth() ? 'text-indigo-600' : ''}">${day}</span>
-            <div class="month-day-tasks mt-1 space-y-1 pr-1"></div>
-        </div>
-    `;
-}
+import { currentDate, tasksCache } from '../state.js';
+import { getRandomPastelColor } from '../utils/dateUtils.js';
+import { renderCurrentView } from '../utils/UIUtils.js';
+import { stringToColor } from '../utils/dateUtils.js';
 
 export function renderMonthlyView() {
     monthlyViewContainer.classList.remove('hidden');
-    const { currentDate, tasksCache } = state;
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -47,12 +32,14 @@ export function renderMonthlyView() {
     `;
     
     const tasksForMonth = tasksCache.filter(t => {
-        const taskDate = new Date(t.due_date.replace(/-/g, '/'));
+        const dateParts = t.due_date.split('-').map(Number);
+        const taskDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
         return taskDate.getFullYear() === year && taskDate.getMonth() === month;
     });
 
     tasksForMonth.forEach(task => {
-        const taskDate = new Date(task.due_date.replace(/-/g, '/'));
+        const dateParts = task.due_date.split('-').map(Number);
+        const taskDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
         const day = taskDate.getDate();
         
         const dayTasksContainer = document.querySelector(`.month-day[data-day="${day}"] .month-day-tasks`);
@@ -66,4 +53,19 @@ export function renderMonthlyView() {
 
     document.getElementById('prev-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCurrentView(); });
     document.getElementById('next-month').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCurrentView(); });
+}
+
+export function renderMonthDay(day, month, year) {
+    const today = new Date();
+    let dayClasses = 'month-day p-2 flex flex-col';
+    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+        dayClasses += ' ring-2 ring-indigo-500 z-10';
+    }
+
+    return `
+        <div class="${dayClasses}" data-day="${day}" style="background-color: ${getRandomPastelColor()};">
+            <span class="font-medium ${day === today.getDate() && month === today.getMonth() ? 'text-indigo-600' : ''}">${day}</span>
+            <div class="month-day-tasks mt-1 space-y-1 pr-1"></div>
+        </div>
+    `;
 }
