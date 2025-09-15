@@ -1,56 +1,107 @@
-export function stringToColor(str) {
-    if (!str) return '#e0e7ff';
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    let color = '#';
-    for (let i = 0; i < 3; i++) {
-        let value = (hash >> (i * 8)) & 0xFF;
-        color += ('00' + (value & 0xCF | 0x30)).toString(16).substr(-2);
-    }
-    return color;
+// utils/UIUtils.js
+
+import { currentFilters, CATEGORIES, tasksCache, searchTerm } from '../state.js';
+import { userProfile, teamMembers } from '../state.js';
+import { weeklyViewContainer, monthlyViewContainer, dashboardViewContainer, kanbanViewContainer, listViewContainer, membersViewContainer, reportsViewContainer, searchAndFilterContainer, loadingSpinner, sidebar, sidebarBackdrop, currentViewTitle } from '../main.js';
+import { renderWeeklyView } from '../components/WeeklyView.js';
+import { renderMonthlyView } from '../components/MonthlyView.js';
+import { renderDashboardView } from '../components/DashboardView.js';
+import { renderKanbanView } from '../components/KanbanView.js';
+import { renderListView } from '../components/ListView.js';
+import { renderMembersView } from '../components/MembersView.js';
+import { renderReportsView } from '../components/ReportView.js';
+import { chartInstances, currentView } from '../state.js';
+
+export function showLoading() {
+    loadingSpinner.classList.remove('hidden');
+    [weeklyViewContainer, monthlyViewContainer, dashboardViewContainer, kanbanViewContainer, listViewContainer, membersViewContainer, reportsViewContainer, searchAndFilterContainer].forEach(el => el.classList.add('hidden'));
 }
 
-export function getRandomPastelColor() {
-    const hue = Math.floor(Math.random() * 360);
-    return `hsl(${hue}, 80%, 92%)`;
+export function hideLoading() { loadingSpinner.classList.add('hidden'); }
+
+export function getFilteredTasksFromCache() {
+    return tasksCache.filter(task => {
+        const priorityMatch = currentFilters.priority === 'all' || task.priority === currentFilters.priority;
+        const categoryMatch = currentFilters.category === 'all' || task.category === currentFilters.category;
+        
+        let personMatch = true;
+        if (currentFilters.person === 'unassigned') {
+            personMatch = !task.assigned_to_email;
+        } else if (currentFilters.person !== 'all') {
+            personMatch = task.assigned_to_email === currentFilters.person;
+        }
+
+        const searchMatch = searchTerm === '' || (task.content && task.content.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        return priorityMatch && categoryMatch && personMatch && searchMatch;
+    });
 }
 
-
-export const debounce = (func, timeout = 300) => {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+export function renderCurrentView() {
+    const viewRenderers = {
+        week: renderWeeklyView, month: renderMonthlyView,
+        dashboard: renderDashboardView, kanban: renderKanbanView,
+        list: renderListView, members: renderMembersView, reports: renderReportsView,
     };
-};
+    const viewsWithFilters = ['dashboard', 'kanban', 'list', 'members', 'week', 'reports'];
 
-export function createChart(canvasId, type, labels, data, colors, chartInstances) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+    if (viewsWithFilters.includes(currentView)) {
+        searchAndFilterContainer.classList.remove('hidden');
+        renderFilters();
+    } else {
+        searchAndFilterContainer.classList.add('hidden');
+    }
+    if(viewRenderers[currentView]) viewRenderers[currentView]();
+}
 
-    chartInstances[canvasId] = new Chart(ctx, {
-        type: type,
-        data: {
-            labels: labels,
-            datasets: [{ label: 'Số lượng', data: data, backgroundColor: colors, borderWidth: type === 'doughnut' ? 0 : 1 }]
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            plugins: { 
-                legend: { 
-                    display: true, 
-                    position: 'top' 
-                },
-                tooltip: { 
-                    enabled: true
-                }
-            },
-            cutout: type === 'doughnut' ? '70%' : '0%'
+export function renderFilters() {
+    const priorityFilter = document.getElementById('priority-filter');
+    priorityFilter.innerHTML = `<option value="all">Tất cả</option>` + Object.keys(PRIORITIES).map(p => `<option value="${p}" ${currentFilters.priority === p ? 'selected' : ''}>${p}</option>`).join('');
+
+    const uniqueCategories = [...new Set(tasksCache.map(t => t.category).filter(Boolean))];
+    CATEGORIES = [...new Set([...CATEGORIES, ...uniqueCategories])];
+    
+    const categoryFilter = document.getElementById('category-filter');
+    categoryFilter.innerHTML = `<option value="all">Tất cả</option>` + CATEGORIES.map(c => `<option value="${c}" ${currentFilters.category === c ? 'selected' : ''}>${c}</option>`).join('');
+    
+    const personFilter = document.getElementById('person-filter');
+    const allUsers = [userProfile, ...teamMembers];
+    personFilter.innerHTML = `<option value="all">Tất cả</option>` + `<option value="unassigned">Chưa giao</option>` + allUsers.map(u => `<option value="${u.email}" ${currentFilters.person === u.email ? 'selected' : ''}>${u.name}</option>`).join('');
+}
+
+export function toggleSidebar() {
+    sidebar.classList.toggle('-translate-x-full');
+    sidebarBackdrop.classList.toggle('hidden');
+}
+
+export function switchView(view) {
+    if (currentView === view && view !== 'dashboard') return;
+    currentView = view;
+    
+    const allViewIds = ['weekly-view-container', 'monthly-view-container', 'dashboard-view-container', 'kanban-view-container', 'list-view-container', 'members-view-container', 'reports-view-container'];
+    allViewIds.forEach(id => {
+        const container = document.getElementById(id);
+        if (container) {
+            container.innerHTML = ''; 
+            container.classList.add('hidden');
         }
     });
+    
+    document.querySelectorAll('#sidebar-nav .sidebar-item').forEach(el => el.classList.remove('active'));
+    const newActiveItem = document.querySelector(`#sidebar-nav .sidebar-item[data-view="${view}"]`);
+    if (newActiveItem) newActiveItem.classList.add('active');
+    
+    const viewTitles = { dashboard: 'Dashboard', week: 'Lịch Tuần', month: 'Lịch Tháng', kanban: 'Bảng Kanban', list: 'Danh sách', members: 'Nhân sự', reports: 'Báo cáo' };
+    if(currentViewTitle) currentViewTitle.textContent = viewTitles[view] || 'Dashboard';
+
+    if (view !== 'week') {
+        weeklyViewController.abort();
+        weeklyViewController = new AbortController();
+    }
+    if (view !== 'dashboard' && view !== 'reports') {
+        Object.values(chartInstances).forEach(chart => chart.destroy());
+        chartInstances = {};
+    }
+    
+    renderCurrentView();
 }
