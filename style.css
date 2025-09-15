@@ -55,18 +55,18 @@ body {
 .sort-icon { display: inline-block; width: 1em; height: 1em; margin-left: 4px; opacity: 0.4; transition: opacity 0.2s; }
 .sortable-header.sorted .sort-icon { opacity: 1; }
 
-/* === CSS TÍCH HỢP CHO NÚT BÁO CÁO === */
-.btn-active {
-    background-color: #4f46e5; /* Tailwind's indigo-600 */
-    color: white;
-    font-weight: 600;
-}
-.btn {
-    transition: all 0.2s ease-in-out;
-    background-color: #f3f4f6; /* gray-100 */
-    color: #374151; /* gray-700 */
-}
-.btn:hover {
-    background-color: #e0e7ff; /* Tailwind's indigo-100 */
-    color: #3730a3; /* Tailwind's indigo-800 */
-}
+ /* === CSS TÍCH HỢP CHO NÚT BÁO CÁO === */
+ .btn-active {
+     background-color: #4f46e5; /* Tailwind's indigo-600 */
+     color: white;
+     font-weight: 600;
+ }
+ .btn {
+     transition: all 0.2s ease-in-out;
+     background-color: #f3f4f6; /* gray-100 */
+     color: #374151; /* gray-700 */
+ }
+ .btn:hover {
+     background-color: #e0e7ff; /* Tailwind's indigo-100 */
+     color: #3730a3; /* Tailwind's indigo-800 */
+ }
