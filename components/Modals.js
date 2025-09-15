@@ -205,3 +205,63 @@ export function openProfileModal() {
 }
 
 // Bạn có thể thêm các modal khác như openProfileModal, openSettingsModal, showSupabaseModal ở đây theo mẫu trên.
+// Thêm vào cuối tệp: components/Modals.js
+
+export function openProfileModal() {
+    const { userProfile, teamMembers } = state;
+    const body = `
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Tên của bạn</label>
+                <input id="profile-name-input" type="text" value="${userProfile.name}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email của bạn (duy nhất)</label>
+                <input id="profile-email-input" type="email" value="${userProfile.email}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <hr>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Thành viên nhóm (mỗi người một dòng)</label>
+                <textarea id="team-members-input" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 h-24" placeholder="Nguyễn Văn A, a@example.com">${teamMembers.map(m => `${m.name}, ${m.email}`).join('\n')}</textarea>
+                <p class="text-xs text-gray-500 mt-1">Định dạng: "Tên, email".</p>
+            </div>
+        </div>`;
+    const footer = `<button id="save-profile-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Lưu thay đổi</button>`;
+
+    const modalElement = showModal('Hồ sơ & Quản lý Nhóm', body, footer);
+    const closeModal = setupModalEvents(modalElement);
+
+    modalElement.querySelector('#save-profile-btn').addEventListener('click', () => {
+        const name = modalElement.querySelector('#profile-name-input').value.trim();
+        const email = modalElement.querySelector('#profile-email-input').value.trim();
+        if (!name || !email) {
+            alert('Tên và Email của bạn không được để trống.');
+            return;
+        }
+        state.userProfile = { name, email };
+
+        const teamText = modalElement.querySelector('#team-members-input').value.trim();
+        state.teamMembers = teamText.split('\n')
+            .map(line => {
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    const email = parts.pop().trim();
+                    const name = parts.join(',').trim();
+                    if (name && email.includes('@')) return { name, email };
+                }
+                return null;
+            }).filter(Boolean);
+
+        saveUserData(); // Hàm này nằm trong main.js, cần export/import
+        updateProfileUI(); // Hàm này nằm trong main.js, cần export/import
+        renderCurrentView();
+        closeModal();
+    });
+}
+
+// Bạn cũng nên tạo luôn hàm này để xử lý trường hợp chưa có cấu hình
+export function showSupabaseModal() {
+    // Nội dung cho modal cấu hình Supabase
+    alert("Chức năng cấu hình Supabase cần được triển khai.");
+}
+
