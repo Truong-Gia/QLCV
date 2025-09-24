@@ -1,80 +1,93 @@
-# QLCV — Quản lý công việc
+Quản lý công việc 4.0
 
-Một ứng dụng web quản lý công việc (to-do/tasks) gọn nhẹ, chạy hoàn toàn trên trình duyệt, không cần backend.
+Một ứng dụng quản lý công việc cá nhân và nhóm nhỏ, được xây dựng với triết lý "Lean Build" - không sử dụng framework, tập trung vào việc ra mắt nhanh và đầy đủ chức năng.
 
-![Banner/Logo](./assets/cover.png)
+✨ Xem Demo trực tiếp tại: https://truong-gia.github.io/QLCV/ ✨
 
-## 👀 Demo
-- (Tùy chọn) GitHub Pages: `https://<username>.github.io/QLCV/`
-- Hoặc mở trực tiếp `index.html` trên máy là chạy.
+## Giới thiệu
 
-> Dự án dùng **HTML/CSS/JavaScript thuần**. Không có bước build. Cấu trúc thư mục tham khảo bên dưới.
+Đây là một hệ thống quản lý công việc (Task Management) hoàn chỉnh, cho phép người dùng tạo, theo dõi, và báo cáo tiến độ công việc một cách trực quan. Ứng dụng được thiết kế để hoạt động mà không cần bất kỳ bước cài đặt phức tạp nào phía client, chỉ cần một trình duyệt web và kết nối tới backend Supabase.
 
----
+Triết lý cốt lõi của dự án là:
 
-## ✨ Tính năng chính
-- Tạo / sửa / xóa công việc.
-- Đánh dấu hoàn thành, lọc theo trạng thái (Tất cả / Đang làm / Hoàn thành).
-- Tìm kiếm nhanh theo tiêu đề/nội dung.
-- (Tùy chọn) Lưu trạng thái cục bộ trên trình duyệt để không mất dữ liệu sau khi refresh.
-- Gọn nhẹ, tải nhanh, hoạt động offline cơ bản.
+Launch Nhanh: Xây dựng và triển khai trong thời gian ngắn nhất.
 
----
+Không Framework: Sử dụng Vanilla JavaScript (JavaScript thuần) để giữ cho ứng dụng nhẹ và dễ hiểu.
 
-## 🧱 Kiến trúc & Thư mục
+Lấy Feedback Thật: Dễ dàng chia sẻ qua một đường link duy nhất để nhận phản hồi từ người dùng.
 
-```
-QLCV/
-├─ components/     # Thành phần giao diện (modal, item, filter, v.v.)
-├─ services/       # Tầng dịch vụ (lưu trữ, đồng bộ, API khi mở rộng)
-├─ utils/          # Hàm tiện ích (format ngày, id, validate,...)
-├─ index.html      # Trang chính, mount ứng dụng
-├─ style.css       # Style toàn cục
-├─ main.js         # Khởi tạo app, gắn sự kiện, bootstrap state
-└─ state.js        # Quản lý trạng thái (store, actions)
-```
+🚀 Các tính năng chính
+📊 Dashboard tổng quan:
 
----
+Biểu đồ tròn thống kê công việc theo Trạng thái và Mức độ ưu tiên.
 
-## 🚀 Chạy dự án
+Biểu đồ cột thống kê theo Danh mục và Người phụ trách.
 
-### Cách 1: Mở trực tiếp
-1. Tải mã nguồn về máy.
-2. Mở file `index.html` bằng trình duyệt.
+Theo dõi tiến độ công việc chung trong tháng.
 
-### Cách 2: Dùng Live Server (VS Code)
-1. Cài extension **Live Server**.
-2. Chuột phải `index.html` → **Open with Live Server**.
+Danh sách công việc quá hạn, công việc hôm nay, và các công việc sắp tới.
 
-### Cách 3: Dùng HTTP server đơn giản (Node)
-```bash
-npx http-server . -p 5173
-# sau đó mở http://localhost:5173
-```
+📅 Lịch làm việc trực quan:
 
----
+Xem công việc theo Lịch Tuần và Lịch Tháng.
 
-## 🛣️ Lộ trình (Roadmap)
-- [ ] Kéo-thả sắp xếp (drag & drop)
-- [ ] Hạn chót (due date) & nhắc việc
-- [ ] Gán nhãn (tags), ưu tiên (priority)
-- [ ] Đồng bộ đa thiết bị (thêm backend)
-- [ ] PWA: cài như app, làm việc offline tốt hơn
-- [ ] i18n (vi, en)
+Tự động tính toán và hiển thị tiến độ hoàn thành cho mỗi ngày trong tuần.
 
----
+📋 Bảng Kanban:
+
+Quản lý công việc theo phương pháp Kanban với các cột: Cần làm, Đang làm, Hoàn thành, Tạm dừng.
+
+Hỗ trợ kéo-thả (Drag & Drop) để thay đổi trạng thái công việc một cách nhanh chóng.
+
+📈 Báo cáo & Xuất dữ liệu:
+
+Tạo báo cáo động theo khoảng thời gian tùy chỉnh (tuần này, tháng này, quý này...).
+
+Lọc báo cáo theo từng thành viên trong nhóm.
+
+Xuất báo cáo ra file định dạng CSV và PDF.
+
+⚙️ Quản lý công việc đầy đủ (CRUD):
+
+Thêm, sửa, xóa công việc thông qua giao diện modal tiện lợi.
+
+Gán công việc cho người phụ trách, đặt mức độ ưu tiên, danh mục và ngày hết hạn.
+
+🔍 Tìm kiếm & Lọc mạnh mẽ:
+
+Tìm kiếm công việc theo tên.
+
+Lọc công việc theo Mức độ ưu tiên, Danh mục, và Người phụ trách.
+
+👥 Quản lý nhóm đơn giản:
+
+Thiết lập thông tin cá nhân và quản lý danh sách thành viên trong nhóm.
+
+⚡ Cập nhật thời gian thực:
+
+Nhờ sức mạnh của Supabase Realtime, mọi thay đổi (thêm, sửa, xóa công việc) sẽ được tự động cập nhật trên trình duyệt của tất cả người dùng mà không cần tải lại trang.
+
+🛠️ Công nghệ sử dụng
+Frontend: HTML, CSS, JavaScript (Vanilla JS - ES Modules).
+
+Backend & Cơ sở dữ liệu: Supabase (PostgreSQL, Realtime, Functions).
+
+Styling: Tailwind CSS (thông qua CDN).
+
+Biểu đồ: Chart.js.
+
+Kéo-thả (Drag & Drop): SortableJS.
+
+Xuất PDF: jsPDF & jsPDF-AutoTable.
+
+Triển khai (Deployment): GitHub Pages.
 
 ## 📦 Phiên bản & Phát hành
 - **V1.0** — Bản đầu tiên (2025-09-04). Xem tab **Releases** để tải gói build/zip.  
-
----
+- **V2.0** — Bản thứ 2 (2025-09-24)
 
 ## 🤝 Đóng góp
-1. Fork dự án
-2. Tạo nhánh tính năng: `git checkout -b feature/ten-tinh-nang`
-3. Commit: `git commit -m "feat: ..."`
-4. Push: `git push origin feature/ten-tinh-nang`
-5. Mở Pull Request
+1. Gemini
 
 ---
 
