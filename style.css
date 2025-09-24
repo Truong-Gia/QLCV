@@ -33,8 +33,8 @@ body {
 .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .month-day { 
     border: 1px solid rgba(0,0,0,0.05); 
-    height: 150px; /* Tăng chiều cao ô */
-    min-width: 0; /* Ngăn ô co dãn theo nội dung */
+    height: 150px;
+    min-width: 0;
 }
 .month-day.other-month { background-color: #f9fafb; color: #9ca3af; }
 .month-day-tasks {
@@ -42,31 +42,29 @@ body {
     overflow-y: auto;
 }
 .month-task-item {
-    white-space: normal; /* Cho phép xuống dòng */
-    word-break: break-word; /* Ngắt từ nếu cần */
-    align-items: flex-start; /* Căn avatar và text ở trên cùng */
+    white-space: normal;
+    word-break: break-word;
+    align-items: flex-start;
 }
 .avatar { width: 20px; height: 20px; border-radius: 50%; background-color: #e0e7ff; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; flex-shrink: 0;}
 .task-item-clickable { cursor: pointer; transition: background-color 0.2s; }
-.task-item-clickable:hover { background-color: rgba(255,255,255,0.6); }
+.task-item-clickable:hover { background-color: rgba(0,0,0,0.05); }
 .status-badge { padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
 .sortable-header { cursor: pointer; user-select: none; }
 .sortable-header:hover { color: #4f46e5; }
 .sort-icon { display: inline-block; width: 1em; height: 1em; margin-left: 4px; opacity: 0.4; transition: opacity 0.2s; }
 .sortable-header.sorted .sort-icon { opacity: 1; }
-
- /* === CSS TÍCH HỢP CHO NÚT BÁO CÁO === */
- .btn-active {
-     background-color: #4f46e5; /* Tailwind's indigo-600 */
-     color: white;
-     font-weight: 600;
- }
- .btn {
-     transition: all 0.2s ease-in-out;
-     background-color: #f3f4f6; /* gray-100 */
-     color: #374151; /* gray-700 */
- }
- .btn:hover {
-     background-color: #e0e7ff; /* Tailwind's indigo-100 */
-     color: #3730a3; /* Tailwind's indigo-800 */
- }
+.btn-active {
+    background-color: #4f46e5;
+    color: white;
+    font-weight: 600;
+}
+.btn {
+    transition: all 0.2s ease-in-out;
+    background-color: #f3f4f6;
+    color: #374151;
+}
+.btn:hover {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
